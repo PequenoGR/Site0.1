@@ -1,0 +1,6 @@
+{
+  "name": "LuauRaw - Hospedagem e RAW de Scripts Luau",
+  "description": "Plataforma completa para hospedar, gerenciar e servir scripts Luau via links RAW diretos para loadstring com suporte a proteção por chave/senha.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
