@@ -96,6 +96,21 @@ async function runTests() {
     );
 
     // -------------------------------------------------------------------------
+    // TESTE 1C: GET /raw/d44evg (Script d44evg solicitado pelo usuário)
+    // -------------------------------------------------------------------------
+    console.log('--- Teste 1C: Script público d44evg (/raw/d44evg) ---');
+    const res1c = await fetchUrl('/raw/d44evg');
+    assert(res1c.status === 200, `Status HTTP deve ser 200 OK para /raw/d44evg (recebido: ${res1c.status})`);
+    assert(
+      (res1c.headers['content-type'] || '').toLowerCase().includes('text/plain'),
+      `Content-Type de /raw/d44evg deve ser text/plain`
+    );
+    assert(
+      res1c.body.includes('InterfaceScript') || res1c.body.includes('GRHub'),
+      'Corpo de /raw/d44evg deve conter o código Luau'
+    );
+
+    // -------------------------------------------------------------------------
     // TESTE 2: GET /raw/fly-speed-v2 (Outro Script Público Existente)
     // -------------------------------------------------------------------------
     console.log('\n--- Teste 2: Script público utilitário (/raw/fly-speed-v2) ---');

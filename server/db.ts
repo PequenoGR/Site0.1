@@ -309,6 +309,59 @@ return Hub
     updatedAt: new Date().toISOString(),
   };
 
+  const d44evgScript: Script = {
+    id: 'd44evg',
+    userId,
+    authorUsername: 'demo',
+    title: 'GR Hub Luau Loader (d44evg)',
+    category: 'Universal',
+    description: 'Script utilitário GR Hub para execução direta via Roblox loadstring.',
+    code: `local INTERFACE_URL = "https://raw.githubusercontent.com/PequenoGR/Gr_Script/refs/heads/main/InterfaceScript"
+
+local ok, err = pcall(function()
+    local source = game:HttpGet(INTERFACE_URL)
+    if not source or source == "" then
+        error("Não foi possível baixar a interface (fonte vazia).")
+    end
+    local fn, compileErr = loadstring(source)
+    if not fn then
+        error("Erro ao compilar interface: " .. tostring(compileErr))
+    end
+    fn()
+end)
+
+if not ok then
+    warn("[GR Hub] Falha ao carregar a interface: " .. tostring(err))
+    return
+end
+
+local Hub = getgenv().GRHub
+if not Hub then
+    local tries = 0
+    repeat
+        task.wait(0.1)
+        tries = tries + 1
+        Hub = getgenv().GRHub
+    until Hub or tries >= 50
+end
+
+if not Hub then
+    warn("[GR Hub] A API (getgenv().GRHub) não foi exposta pela interface.")
+    return
+end
+
+print("[GR Hub] Inicializado com sucesso via ScriptsGR!")
+return Hub
+`,
+    thumbnailUrl: '',
+    isPasswordProtected: false,
+    accessKeys: [],
+    accessCount: 92,
+    lastAccessedAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
   return {
     users: [
       {
@@ -321,7 +374,7 @@ return Hub
         accentColor: 'cyan',
       }
     ],
-    scripts: [grHubScript, wgj62tScript, defaultPublicScript, defaultProtectedScript]
+    scripts: [grHubScript, wgj62tScript, d44evgScript, defaultPublicScript, defaultProtectedScript]
   };
 }
 
