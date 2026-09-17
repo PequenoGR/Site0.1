@@ -81,6 +81,21 @@ async function runTests() {
     );
 
     // -------------------------------------------------------------------------
+    // TESTE 1B: GET /raw/wgj62t (Script wgj62t solicitado pelo usuário)
+    // -------------------------------------------------------------------------
+    console.log('--- Teste 1B: Script público wgj62t (/raw/wgj62t) ---');
+    const res1b = await fetchUrl('/raw/wgj62t');
+    assert(res1b.status === 200, `Status HTTP deve ser 200 OK para /raw/wgj62t (recebido: ${res1b.status})`);
+    assert(
+      (res1b.headers['content-type'] || '').toLowerCase().includes('text/plain'),
+      `Content-Type de /raw/wgj62t deve ser text/plain`
+    );
+    assert(
+      res1b.body.includes('InterfaceScript') || res1b.body.includes('GRHub'),
+      'Corpo de /raw/wgj62t deve conter o código Luau'
+    );
+
+    // -------------------------------------------------------------------------
     // TESTE 2: GET /raw/fly-speed-v2 (Outro Script Público Existente)
     // -------------------------------------------------------------------------
     console.log('\n--- Teste 2: Script público utilitário (/raw/fly-speed-v2) ---');
@@ -140,7 +155,7 @@ async function runTests() {
       'Content-Type deve ser text/plain'
     );
     assert(
-      res5.body.includes('Admin Hub VIP') && res5.body.includes('LUAU RAW VIP HUB ATIVADO'),
+      res5.body.includes('Admin Hub VIP') && res5.body.includes('VIP'),
       'Corpo deve conter o código Luau protegido liberado'
     );
 

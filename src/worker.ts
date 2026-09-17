@@ -115,6 +115,58 @@ return Hub
     updatedAt: new Date().toISOString(),
   },
   {
+    id: 'wgj62t',
+    userId: 'user_demo_001',
+    authorUsername: 'demo',
+    title: 'GR Hub Luau Main',
+    category: 'Universal',
+    description: 'Script utilitário principal GR Hub para execução direta via Roblox loadstring.',
+    code: `local INTERFACE_URL = "https://raw.githubusercontent.com/PequenoGR/Gr_Script/refs/heads/main/InterfaceScript"
+
+local ok, err = pcall(function()
+    local source = game:HttpGet(INTERFACE_URL)
+    if not source or source == "" then
+        error("Não foi possível baixar a interface (fonte vazia).")
+    end
+    local fn, compileErr = loadstring(source)
+    if not fn then
+        error("Erro ao compilar interface: " .. tostring(compileErr))
+    end
+    fn()
+end)
+
+if not ok then
+    warn("[GR Hub] Falha ao carregar a interface: " .. tostring(err))
+    return
+end
+
+local Hub = getgenv().GRHub
+if not Hub then
+    local tries = 0
+    repeat
+        task.wait(0.1)
+        tries = tries + 1
+        Hub = getgenv().GRHub
+    until Hub or tries >= 50
+end
+
+if not Hub then
+    warn("[GR Hub] A API (getgenv().GRHub) não foi exposta pela interface.")
+    return
+end
+
+print("[GR Hub] Inicializado com sucesso via ScriptsGR!")
+return Hub
+`,
+    thumbnailUrl: '',
+    isPasswordProtected: false,
+    accessKeys: [],
+    accessCount: 85,
+    lastAccessedAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
     id: 'f7rt2f',
     userId: 'user_demo_001',
     authorUsername: 'demo',
@@ -225,11 +277,19 @@ async function loadData(env: Env): Promise<{ users: User[]; scripts: Script[] }>
     try {
       const usersRaw = await kv.get('db_users', 'json');
       const scriptsRaw = await kv.get('db_scripts', 'json');
-      const users = Array.isArray(usersRaw) && usersRaw.length > 0 ? usersRaw : inMemoryUsers;
-      const scripts = Array.isArray(scriptsRaw) && scriptsRaw.length > 0 ? scriptsRaw : inMemoryScripts;
+      const users = Array.isArray(usersRaw) && usersRaw.length > 0 ? (usersRaw as User[]) : inMemoryUsers;
+      let scripts = Array.isArray(scriptsRaw) && scriptsRaw.length > 0 ? (scriptsRaw as Script[]) : inMemoryScripts;
+      
+      // Ensure all initial seeds are present if not already in scripts
+      const existingIds = new Set(scripts.map(s => s.id.toLowerCase()));
+      for (const initScript of INITIAL_SCRIPTS) {
+        if (!existingIds.has(initScript.id.toLowerCase())) {
+          scripts.push(initScript);
+        }
+      }
       return { users, scripts };
     } catch {
-      // Fallback
+      // Fallback to in-memory
     }
   }
   return { users: inMemoryUsers, scripts: inMemoryScripts };
@@ -243,10 +303,36 @@ async function saveData(env: Env, users: User[], scripts: Script[]): Promise<voi
     try {
       await kv.put('db_users', JSON.stringify(users));
       await kv.put('db_scripts', JSON.stringify(scripts));
+      // Also persist direct keys for ultra-fast single script lookups across regions
+      for (const s of scripts) {
+        await kv.put('script_' + s.id.toLowerCase(), JSON.stringify(s));
+      }
     } catch (e) {
       console.warn('Failed to persist to KV:', e);
     }
   }
+}
+
+async function findScript(env: Env, scriptId: string): Promise<Script | null> {
+  const cleanId = scriptId.trim().replace(/\.lua$/i, '').toLowerCase();
+  if (!cleanId) return null;
+
+  const kv = await getKV(env);
+  if (kv) {
+    try {
+      const direct = await kv.get('script_' + cleanId, 'json');
+      if (direct && typeof direct === 'object' && (direct as any).code) {
+        return direct as Script;
+      }
+    } catch {}
+  }
+
+  const { scripts } = await loadData(env);
+  const found = scripts.find((s) => s.id.toLowerCase() === cleanId || s.id === scriptId.trim());
+  if (found) return found;
+
+  const seed = INITIAL_SCRIPTS.find((s) => s.id.toLowerCase() === cleanId || s.id === scriptId.trim());
+  return seed || null;
 }
 
 // Token creation and verification with Web Crypto API
@@ -397,10 +483,7 @@ export default {
         return textResponse('Script not found', 404);
       }
 
-      const { scripts } = await loadData(env);
-      const script = scripts.find(
-        (s) => s.id === id || s.id.toLowerCase() === id.toLowerCase()
-      );
+      const script = await findScript(env, id);
 
       if (!script) {
         return textResponse('Script not found', 404);
@@ -875,6 +958,12 @@ export default {
         if (idx !== -1) {
           scripts.splice(idx, 1);
           await saveData(env, users, scripts);
+          const kv = await getKV(env);
+          if (kv) {
+            try {
+              await kv.delete('script_' + script.id.toLowerCase());
+            } catch {}
+          }
         }
 
         return jsonResponse({ message: 'Script excluído com sucesso.' });

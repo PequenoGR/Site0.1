@@ -80,7 +80,20 @@ function loadDatabase(): DatabaseSchema {
       return initialData;
     }
     const raw = fs.readFileSync(DB_FILE, 'utf-8');
-    return JSON.parse(raw);
+    const parsed: DatabaseSchema = JSON.parse(raw);
+    const initialSeeds = seedInitialData().scripts;
+    const existingIds = new Set((parsed.scripts || []).map((s: any) => s.id.toLowerCase()));
+    let updated = false;
+    for (const initScript of initialSeeds) {
+      if (!existingIds.has(initScript.id.toLowerCase())) {
+        parsed.scripts.push(initScript);
+        updated = true;
+      }
+    }
+    if (updated) {
+      saveDatabase(parsed);
+    }
+    return parsed;
   } catch (err) {
     console.error('Error loading database, initializing fresh:', err);
     const initialData = seedInitialData();
@@ -190,6 +203,112 @@ showWelcomeGUI()
     updatedAt: new Date().toISOString(),
   };
 
+  const grHubScript: Script = {
+    id: 'w33umz',
+    userId,
+    authorUsername: 'demo',
+    title: 'GR Hub Luau',
+    category: 'Universal',
+    description: 'Script utilitário GR Hub com interface e módulos automáticos.',
+    code: `local INTERFACE_URL = "https://raw.githubusercontent.com/PequenoGR/Gr_Script/refs/heads/main/InterfaceScript"
+
+local ok, err = pcall(function()
+    local source = game:HttpGet(INTERFACE_URL)
+    if not source or source == "" then
+        error("Não foi possível baixar a interface (fonte vazia).")
+    end
+    local fn, compileErr = loadstring(source)
+    if not fn then
+        error("Erro ao compilar interface: " .. tostring(compileErr))
+    end
+    fn()
+end)
+
+if not ok then
+    warn("[GR Hub] Falha ao carregar a interface: " .. tostring(err))
+    return
+end
+
+local Hub = getgenv().GRHub
+if not Hub then
+    local tries = 0
+    repeat
+        task.wait(0.1)
+        tries = tries + 1
+        Hub = getgenv().GRHub
+    until Hub or tries >= 50
+end
+
+if not Hub then
+    warn("[GR Hub] A API (getgenv().GRHub) não foi exposta pela interface.")
+    return
+end
+
+print("[GR Hub] Inicializado com sucesso via ScriptsGR!")
+return Hub
+`,
+    thumbnailUrl: '',
+    isPasswordProtected: false,
+    accessKeys: [],
+    accessCount: 142,
+    lastAccessedAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  const wgj62tScript: Script = {
+    id: 'wgj62t',
+    userId,
+    authorUsername: 'demo',
+    title: 'GR Hub Luau Main',
+    category: 'Universal',
+    description: 'Script utilitário principal GR Hub para execução direta via Roblox loadstring.',
+    code: `local INTERFACE_URL = "https://raw.githubusercontent.com/PequenoGR/Gr_Script/refs/heads/main/InterfaceScript"
+
+local ok, err = pcall(function()
+    local source = game:HttpGet(INTERFACE_URL)
+    if not source or source == "" then
+        error("Não foi possível baixar a interface (fonte vazia).")
+    end
+    local fn, compileErr = loadstring(source)
+    if not fn then
+        error("Erro ao compilar interface: " .. tostring(compileErr))
+    end
+    fn()
+end)
+
+if not ok then
+    warn("[GR Hub] Falha ao carregar a interface: " .. tostring(err))
+    return
+end
+
+local Hub = getgenv().GRHub
+if not Hub then
+    local tries = 0
+    repeat
+        task.wait(0.1)
+        tries = tries + 1
+        Hub = getgenv().GRHub
+    until Hub or tries >= 50
+end
+
+if not Hub then
+    warn("[GR Hub] A API (getgenv().GRHub) não foi exposta pela interface.")
+    return
+end
+
+print("[GR Hub] Inicializado com sucesso via ScriptsGR!")
+return Hub
+`,
+    thumbnailUrl: '',
+    isPasswordProtected: false,
+    accessKeys: [],
+    accessCount: 85,
+    lastAccessedAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
   return {
     users: [
       {
@@ -202,7 +321,7 @@ showWelcomeGUI()
         accentColor: 'cyan',
       }
     ],
-    scripts: []
+    scripts: [grHubScript, wgj62tScript, defaultPublicScript, defaultProtectedScript]
   };
 }
 
