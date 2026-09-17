@@ -18,9 +18,11 @@ export interface ScriptItem {
   userId: string;
   authorUsername: string;
   title: string;
+  category?: string;
   description: string;
   code?: string;
   codeLength?: number;
+  thumbnailUrl?: string;
   isPasswordProtected: boolean;
   accessCount: number;
   lastAccessedAt: string | null;

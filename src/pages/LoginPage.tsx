@@ -3,6 +3,7 @@ import { Terminal, Lock, User, ArrowRight, Sparkles, KeyRound } from 'lucide-rea
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { useTheme } from '../context/ThemeContext';
+import { Logo } from '../components/Logo';
 
 interface LoginPageProps {
   onNavigate: (tab: string) => void;
@@ -50,11 +51,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
         }`}
       >
         {/* Brand Header */}
-        <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 mx-auto flex items-center justify-center text-slate-950 font-black shadow-lg shadow-cyan-500/20">
-            <Terminal className="w-6 h-6 text-slate-950" />
+        <div className="text-center space-y-3 flex flex-col items-center">
+          <div className="py-2">
+            <Logo size="lg" />
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-100">Acesse sua Conta</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-100">Acesse sua Conta</h1>
           <p className="text-xs text-slate-400">
             Gerencie seus scripts Luau e links RAW diretos para loadstring
           </p>

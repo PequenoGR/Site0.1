@@ -87,12 +87,26 @@ export const ScriptCard: React.FC<ScriptCardProps> = ({
 
   return (
     <div
-      className={`group relative flex flex-col justify-between rounded-2xl border transition-all duration-200 hover:shadow-xl ${
+      className={`group relative flex flex-col justify-between rounded-2xl border transition-all duration-200 hover:shadow-xl overflow-hidden ${
         mode === 'dark'
           ? 'bg-slate-900/80 border-slate-800/90 hover:border-slate-700/90 hover:bg-slate-900'
           : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50'
       }`}
     >
+      {/* Optional Thumbnail Banner */}
+      {script.thumbnailUrl && (
+        <div className="h-32 sm:h-36 w-full overflow-hidden bg-black relative">
+          <img
+            src={script.thumbnailUrl}
+            alt={script.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              (e.target as HTMLElement).style.display = 'none';
+            }}
+          />
+        </div>
+      )}
+
       {/* Top Header & Badges */}
       <div className="p-5 pb-3">
         <div className="flex items-start justify-between gap-3 mb-2.5">

@@ -24,8 +24,10 @@ export interface Script {
   userId: string;
   authorUsername: string;
   title: string;
+  category?: string;
   description: string;
   code: string;
+  thumbnailUrl?: string;
   isPasswordProtected: boolean;
   passwordHash?: string;
   accessKeys: AccessKey[];
@@ -178,13 +180,16 @@ showWelcomeGUI()
         accentColor: 'cyan',
       }
     ],
-    scripts: [defaultPublicScript, defaultProtectedScript]
+    scripts: []
   };
 }
 
 let dbInstance = loadDatabase();
 
 export const db = {
+  reload(): void {
+    dbInstance = loadDatabase();
+  },
   getUsers(): User[] {
     return dbInstance.users;
   },

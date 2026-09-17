@@ -111,7 +111,9 @@ export const api = {
 
   async createScript(payload: {
     title: string;
+    category?: string;
     description?: string;
+    thumbnailUrl?: string;
     code: string;
     isPasswordProtected: boolean;
     password?: string;
@@ -126,7 +128,9 @@ export const api = {
     id: string,
     payload: {
       title?: string;
+      category?: string;
       description?: string;
+      thumbnailUrl?: string;
       code?: string;
       isPasswordProtected?: boolean;
       password?: string;

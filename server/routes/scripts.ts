@@ -61,7 +61,9 @@ router.get('/', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
         userId: s.userId,
         authorUsername: s.authorUsername,
         title: s.title,
+        category: s.category,
         description: s.description,
+        thumbnailUrl: s.thumbnailUrl,
         codeLength: s.code.length,
         isPasswordProtected: s.isPasswordProtected,
         accessCount: s.accessCount,
@@ -111,7 +113,9 @@ router.get('/:id', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
         userId: script.userId,
         authorUsername: script.authorUsername,
         title: script.title,
+        category: script.category,
         description: script.description,
+        thumbnailUrl: script.thumbnailUrl,
         isPasswordProtected: script.isPasswordProtected,
         accessCount: script.accessCount,
         lastAccessedAt: script.lastAccessedAt,
@@ -133,7 +137,7 @@ router.get('/:id', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
 // POST /api/scripts - Create new script
 router.post('/', optionalAuth, scriptsLimiter, (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { title, description = '', code, isPasswordProtected = false, password = '' } = req.body;
+    const { title, category = '', description = '', code, thumbnailUrl = '', isPasswordProtected = false, password = '' } = req.body;
 
     if (!title || typeof title !== 'string' || title.trim().length === 0) {
       return res.status(400).json({ error: 'O título do script é obrigatório.' });
@@ -174,8 +178,10 @@ router.post('/', optionalAuth, scriptsLimiter, (req: AuthenticatedRequest, res: 
       userId,
       authorUsername,
       title: title.trim().slice(0, 100),
+      category: typeof category === 'string' ? category.trim() : undefined,
       description: description.trim().slice(0, 500),
       code,
+      thumbnailUrl: typeof thumbnailUrl === 'string' ? thumbnailUrl.trim() : undefined,
       isPasswordProtected: Boolean(isPasswordProtected),
       passwordHash,
       accessKeys,
@@ -192,7 +198,9 @@ router.post('/', optionalAuth, scriptsLimiter, (req: AuthenticatedRequest, res: 
       script: {
         id: newScript.id,
         title: newScript.title,
+        category: newScript.category,
         description: newScript.description,
+        thumbnailUrl: newScript.thumbnailUrl,
         isPasswordProtected: newScript.isPasswordProtected,
         accessCount: newScript.accessCount,
         accessKeys: newScript.accessKeys,
@@ -209,7 +217,7 @@ router.post('/', optionalAuth, scriptsLimiter, (req: AuthenticatedRequest, res: 
 router.put('/:id', requireAuth, scriptsLimiter, (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, description, code, isPasswordProtected, password } = req.body;
+    const { title, category, description, code, thumbnailUrl, isPasswordProtected, password } = req.body;
 
     const existing = db.getScriptById(id);
     if (!existing) {
@@ -221,6 +229,14 @@ router.put('/:id', requireAuth, scriptsLimiter, (req: AuthenticatedRequest, res:
     }
 
     const updates: Partial<Script> = {};
+
+    if (category !== undefined) {
+      updates.category = typeof category === 'string' ? category.trim() : '';
+    }
+
+    if (thumbnailUrl !== undefined) {
+      updates.thumbnailUrl = typeof thumbnailUrl === 'string' ? thumbnailUrl.trim() : '';
+    }
 
     if (title !== undefined) {
       if (typeof title !== 'string' || title.trim().length === 0) {
