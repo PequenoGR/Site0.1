@@ -288,7 +288,7 @@ export const SettingsPage: React.FC = () => {
       >
         <div className="flex items-center gap-2 font-bold text-slate-200">
           <Server className="w-4 h-4 text-cyan-400" />
-          <span>Informações do Servidor LuauRaw</span>
+          <span>Informações do Servidor ScriptsGR</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
           <div>• Engine: Express + Node.js (Porta 3000)</div>

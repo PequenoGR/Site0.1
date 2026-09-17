@@ -47,7 +47,7 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
   const [copiedRaw, setCopiedRaw] = useState(false);
   const [copiedLoadstring, setCopiedLoadstring] = useState(false);
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://luauraw.dev';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://scriptsgr.dev';
 
   useEffect(() => {
     async function loadAll() {
@@ -191,7 +191,7 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
           Ele <strong>não possui navegador web</strong> para exibir formulários de senha em HTML. Se um site retornar HTML, o executor falha com erro de sintaxe.
         </p>
         <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 font-mono text-[11px] text-cyan-300">
-          -- Formato Seguro Autenticado suportado pelo LuauRaw:
+          -- Formato Seguro Autenticado suportado pelo ScriptsGR:
           <br />
           <span className="text-amber-400">loadstring</span>(game:HttpGet(&quot;{origin}/raw/
           <span className="text-cyan-400">ID_DO_SCRIPT</span>?key=<span className="text-emerald-400">CHAVE_DE_ACESSO</span>&quot;))()

@@ -129,7 +129,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
             disabled={submitting}
             className={`w-full py-3 px-4 rounded-xl font-bold text-xs text-slate-950 flex items-center justify-center gap-2 shadow-lg transition-all active:scale-98 ${accentClasses.primaryBg} ${accentClasses.primaryHover}`}
           >
-            <span>{submitting ? 'Verificando...' : 'Entrar no LuauRaw'}</span>
+            <span>{submitting ? 'Verificando...' : 'Entrar no ScriptsGR'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>

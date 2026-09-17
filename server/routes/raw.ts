@@ -103,7 +103,7 @@ const handleRawScript = (req: Request, res: Response) => {
     // If not authorized, return 401 Unauthorized in plain text
     return res.status(401).send('Unauthorized');
   } catch (err) {
-    console.error('[LuauRaw] Error processing /raw request:', err);
+    console.error('[ScriptsGR] Error processing /raw request:', err);
     return res.status(500).send('Internal Server Error');
   }
 };

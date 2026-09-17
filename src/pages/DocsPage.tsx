@@ -22,13 +22,13 @@ export const DocsPage: React.FC = () => {
   const [copiedProtected, setCopiedProtected] = useState(false);
   const [copiedRobloxProtected, setCopiedRobloxProtected] = useState(false);
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://luauraw.dev';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://scriptsgr.dev';
 
   const publicExample = `loadstring(game:HttpGet("${origin}/raw/fly-speed-v2"))()`;
 
   const protectedExample = `loadstring(game:HttpGet("${origin}/raw/admin-hub-vip?key=key_demo_vip_access_2026"))()`;
 
-  const robustProtectedExample = `-- Exemplo Robusto com Tratamento de Erros no Luau
+  const robustProtectedExample = `-- Exemplo Robusto com Tratamento de Erros no Luau - ScriptsGR
 local scriptUrl = "${origin}/raw/admin-hub-vip?key=key_demo_vip_access_2026"
 
 local success, result = pcall(function()
@@ -39,12 +39,12 @@ if success and result then
     local executable, loadErr = loadstring(result)
     if executable then
         executable()
-        print("[LuauRaw] Script executado com sucesso!")
+        print("[ScriptsGR] Script executado com sucesso!")
     else
-        warn("[LuauRaw] Erro ao compilar script: " .. tostring(loadErr))
+        warn("[ScriptsGR] Erro ao compilar script: " .. tostring(loadErr))
     end
 else
-    warn("[LuauRaw] Falha ao baixar código RAW: " .. tostring(result))
+    warn("[ScriptsGR] Falha ao baixar código RAW: " .. tostring(result))
 end`;
 
   const copyCode = async (text: string, setter: (val: boolean) => void) => {
@@ -112,7 +112,7 @@ end`;
           <span>2. Como Executar um Script Protegido por Senha / Chave (🔒)</span>
         </div>
         <p className="text-xs text-slate-300 leading-relaxed">
-          Como a função <code className="font-mono text-amber-300">game:HttpGet</code> é uma requisição de máquina pura (sem formulários visuais do browser), o LuauRaw adota a autenticação via <strong>Token de Acesso seguro</strong> na query string <code className="font-mono text-amber-300">?key=SUA_CHAVE</code>.
+          Como a função <code className="font-mono text-amber-300">game:HttpGet</code> é uma requisição de máquina pura (sem formulários visuais do browser), o ScriptsGR adota a autenticação via <strong>Token de Acesso seguro</strong> na query string <code className="font-mono text-amber-300">?key=SUA_CHAVE</code>.
         </p>
 
         <div className="relative p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs">
@@ -141,7 +141,7 @@ end`;
           <span>3. Execução Robusta em Luau (com Proteção pcall)</span>
         </div>
         <p className="text-xs text-slate-300 leading-relaxed">
-          Se o script estiver protegido e alguém tentar rodar sem a chave, o LuauRaw retorna um erro amigável em Luau puro (não quebra o parser com HTML). Veja este código recomendado para produções:
+          Se o script estiver protegido e alguém tentar rodar sem a chave, o ScriptsGR retorna um erro amigável em Luau puro (não quebra o parser com HTML). Veja este código recomendado para produções:
         </p>
 
         <div className="relative p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs">

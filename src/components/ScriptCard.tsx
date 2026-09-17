@@ -41,7 +41,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = ({
   const [copiedRaw, setCopiedRaw] = useState(false);
   const [copiedLoadstring, setCopiedLoadstring] = useState(false);
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://luauraw.dev';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://scriptsgr.dev';
   
   // Default key to use in loadstring if available
   const activeKey = script.accessKeys && script.accessKeys.length > 0 ? script.accessKeys[0].key : undefined;

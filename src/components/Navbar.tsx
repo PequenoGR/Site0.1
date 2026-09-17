@@ -54,10 +54,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => onNavigate('dashboard')}
             className="flex items-center gap-2 cursor-pointer md:hidden"
           >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-bold text-slate-950 text-sm">
-              <Terminal className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-bold text-slate-950 text-sm shadow-md shadow-cyan-500/20">
+              <Terminal className="w-4 h-4 text-slate-950" />
             </div>
-            <span className="font-extrabold text-sm tracking-tight">LuauRaw</span>
+            <div className="flex items-center">
+              <span className="font-black text-sm tracking-tight text-slate-100">Scripts</span>
+              <span className={`font-black text-sm ${accentClasses.text}`}>GR</span>
+            </div>
           </div>
 
           {/* Quick Search on Desktop */}

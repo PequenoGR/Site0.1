@@ -65,7 +65,7 @@ function AppContent() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-100">
         <div className="w-10 h-10 border-3 border-cyan-400 border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-sm font-semibold tracking-wide text-slate-400">Iniciando LuauRaw Engine...</p>
+        <p className="text-sm font-semibold tracking-wide text-slate-400">Iniciando ScriptsGR Engine...</p>
       </div>
     );
   }

@@ -30,7 +30,7 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedLoadstring, setCopiedLoadstring] = useState(false);
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://luauraw.dev';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://scriptsgr.dev';
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();

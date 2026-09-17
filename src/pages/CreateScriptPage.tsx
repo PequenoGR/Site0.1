@@ -26,18 +26,18 @@ const TEMPLATES = [
   {
     name: 'Exemplo Padrão Luau',
     code: `--[[
-    Script Luau Criado com LuauRaw
+    Script Luau Criado com ScriptsGR
     Hospedado para uso via loadstring(game:HttpGet(...))()
 ]]
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
-print("[LuauRaw] Script iniciado com sucesso para: " .. tostring(player.Name))
+print("[ScriptsGR] Script iniciado com sucesso para: " .. tostring(player.Name))
 
 -- Adicione sua lógica Luau abaixo:
 local function init()
-    warn("[LuauRaw] Módulos carregados!")
+    warn("[ScriptsGR] Módulos carregados!")
 end
 
 init()
@@ -46,7 +46,7 @@ init()
   {
     name: 'Notificação & Print Luau',
     code: `--[[
-    Roblox Luau Starter Template
+    Roblox Luau Starter Template - ScriptsGR
 ]]
 
 local StarterGui = game:GetService("StarterGui")
@@ -59,7 +59,7 @@ local function notify(title, message)
     })
 end
 
-notify("LuauRaw", "Script carregado com sucesso!")
+notify("ScriptsGR", "Script carregado com sucesso!")
 `,
   },
   {

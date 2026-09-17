@@ -1,6 +1,6 @@
 {
-  "name": "LuauRaw - Hospedagem e RAW de Scripts Luau",
-  "description": "Plataforma completa para hospedar, gerenciar e servir scripts Luau via links RAW diretos para loadstring com suporte a proteção por chave/senha.",
+  "name": "ScriptsGR - Hospedagem e RAW de Scripts Luau",
+  "description": "ScriptsGR - Plataforma de alto desempenho para hospedar, compartilhar e carregar scripts Luau para Roblox via links RAW diretos com proteção por chave e senha.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

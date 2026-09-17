@@ -52,18 +52,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => handleNav('dashboard')}
           className="flex items-center gap-3 px-2 py-3 mb-6 cursor-pointer group"
         >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 text-slate-950 font-black text-lg">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/25 text-slate-950 font-black text-lg group-hover:scale-105 transition-transform">
             <Terminal className="w-5 h-5 text-slate-950" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-base tracking-tight text-slate-100">Luau</span>
-              <span className={`font-black text-base ${accentClasses.text}`}>Raw</span>
+              <span className="font-extrabold text-base tracking-tight text-slate-100">Scripts</span>
+              <span className={`font-black text-base ${accentClasses.text}`}>GR</span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                PRO
+                ROBLOX
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-medium">Hospedagem Pastebin Luau</p>
+            <p className="text-[11px] text-slate-400 font-medium">Hospedagem & RAW Luau</p>
           </div>
         </div>
 

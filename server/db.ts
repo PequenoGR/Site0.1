@@ -88,7 +88,7 @@ function seedInitialData(): DatabaseSchema {
     description: 'Script utilitário em Luau com controle suave de movimentação, teleporte e notificações no console.',
     code: `--[[
     Luau Utility Script v2.4
-    Hospedado via LuauRaw
+    Hospedado via ScriptsGR
     Exemplo compatível com loadstring(game:HttpGet(...))()
 ]]
 
@@ -100,7 +100,7 @@ local function notify(title, text)
     print(string.format("[%s]: %s", title, text))
 end
 
-notify("LuauRaw", "Script carregado com sucesso pelo loadstring!")
+notify("ScriptsGR", "Script carregado com sucesso pelo loadstring!")
 
 -- Exemplo de função utilitária
 local function setWalkSpeed(speed)
@@ -133,20 +133,20 @@ return { version = "2.4.0", status = "active" }
     description: 'Script restrito para membros VIP. Exige chave ou autenticação prévia.',
     code: `--[[
     Admin Hub VIP - Acesso Restrito
-    Autenticado com sucesso via LuauRaw Security Key!
+    Autenticado com sucesso via ScriptsGR Security Key!
 ]]
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
 print("=========================================")
-print("  LUAU RAW VIP HUB ATIVADO COM SUCESSO!  ")
+print("  SCRIPTSGR VIP HUB ATIVADO COM SUCESSO! ")
 print("  Usuário autenticado: " .. tostring(player.Name))
 print("=========================================")
 
 local function showWelcomeGUI()
     -- Lógica do painel VIP aqui
-    warn("[LuauRaw VIP] Inicializando módulos protegidos...")
+    warn("[ScriptsGR VIP] Inicializando módulos protegidos...")
 end
 
 showWelcomeGUI()

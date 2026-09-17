@@ -39,7 +39,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     setSubmitting(true);
     try {
       await register(username.trim(), email.trim(), password);
-      showToast('Conta criada com sucesso!', `Bem-vindo ao LuauRaw, @${username}!`);
+      showToast('Conta criada com sucesso!', `Bem-vindo ao ScriptsGR, @${username}!`);
       onNavigate('dashboard');
     } catch (err: any) {
       showToast('Erro no cadastro', err.message || 'Falha ao registrar conta.', 'error');

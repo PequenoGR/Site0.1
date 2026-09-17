@@ -38,7 +38,7 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
   const [copiedLoadstring, setCopiedLoadstring] = useState(false);
   const [unlockModalOpen, setUnlockModalOpen] = useState(false);
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://luauraw.dev';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://scriptsgr.dev';
 
   const loadScript = async () => {
     setLoading(true);
