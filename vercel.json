@@ -2,15 +2,19 @@
   "version": 2,
   "rewrites": [
     {
+      "source": "/raw/(.*)",
+      "destination": "/api/raw?id=$1"
+    },
+    {
+      "source": "/raw",
+      "destination": "/api/raw"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api"
     },
     {
-      "source": "/raw/(.*)",
-      "destination": "/api"
-    },
-    {
-      "source": "/(.*)",
+      "source": "/((?!api|raw).*)",
       "destination": "/index.html"
     }
   ]

@@ -37,9 +37,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, search
         search: localSearch,
         scope: 'explore',
       });
-      setScripts(res.scripts);
+      const list = Array.isArray(res?.scripts) ? res.scripts : [];
+      setScripts(list);
     } catch (err: any) {
       showToast('Erro ao carregar scripts', err.message, 'error');
+      setScripts([]);
     } finally {
       setLoading(false);
     }
@@ -97,7 +99,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, search
           <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-3" />
           <p className="text-sm font-medium">Carregando scripts...</p>
         </div>
-      ) : scripts.length === 0 ? (
+      ) : (!Array.isArray(scripts) || scripts.length === 0) ? (
         <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 text-slate-400 max-w-5xl mx-auto w-full">
           <Terminal className="w-10 h-10 text-slate-500 mb-3" />
           <h3 className="text-base font-bold text-slate-200 mb-1">Nenhum script encontrado</h3>

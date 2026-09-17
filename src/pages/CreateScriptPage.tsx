@@ -11,8 +11,11 @@ import {
   X,
   Upload,
   ArrowLeft,
+  UserCheck,
+  LogIn,
 } from 'lucide-react';
 import { api } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { copyToClipboard } from '../lib/clipboard';
 
@@ -33,6 +36,7 @@ const CATEGORIES = [
 ];
 
 export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }) => {
+  const { user } = useAuth();
   const { showToast } = useToast();
 
   const [name, setName] = useState('');
@@ -110,6 +114,16 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
 
   // Save / Submit Script
   const handleSubmit = async () => {
+    if (!user) {
+      showToast(
+        'Login Obrigatório',
+        'Você precisa estar conectado à sua conta para publicar. Apenas você terá permissão para editar ou apagar o script.',
+        'error'
+      );
+      onNavigate('login');
+      return;
+    }
+
     if (!name.trim()) {
       showToast('Nome obrigatório', 'Por favor informe o Name do script.', 'error');
       return;
@@ -132,10 +146,13 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
         password: hasPassword ? password : '',
       });
 
-      showToast('Script criado com sucesso!', `Script ${res.script.title} registrado.`);
+      showToast('Script criado com sucesso!', `Script ${res.script.title} registrado e vinculado à sua conta.`);
       onNavigate('dashboard');
     } catch (err: any) {
       showToast('Erro ao criar script', err.message, 'error');
+      if (err.message && err.message.toLowerCase().includes('logado')) {
+        onNavigate('login');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -153,7 +170,7 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
       />
 
       <div className="w-full max-w-[340px] sm:max-w-[380px] flex flex-col items-center gap-4">
-        {/* Top Back Row */}
+        {/* Top Back Row & Author status */}
         <div className="w-full flex items-center justify-between pb-1">
           <button
             type="button"
@@ -164,7 +181,36 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
             <ArrowLeft className="w-4 h-4" />
             <span>Voltar</span>
           </button>
+
+          {user ? (
+            <div className="flex items-center gap-1 text-[11px] font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-800/60 px-2 py-0.5 rounded-full">
+              <UserCheck className="w-3 h-3" />
+              <span>@{user.username}</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onNavigate('login')}
+              className="flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-950/60 border border-amber-800/60 px-2 py-0.5 rounded-full hover:bg-amber-900/60 transition-colors"
+            >
+              <LogIn className="w-3 h-3" />
+              <span>Fazer Login</span>
+            </button>
+          )}
         </div>
+
+        {!user && (
+          <div className="w-full bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-300 flex items-start gap-2.5">
+            <Lock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-bold text-amber-200">Faça login para postar</p>
+              <p className="text-[11px] text-amber-300/80 leading-relaxed">
+                Para garantir que apenas quem botou o script possa editá-lo ou apagá-lo, o login é obrigatório.
+              </p>
+            </div>
+          </div>
+        )}
+
         
         {/* 1. Upload Photo Container */}
         <div

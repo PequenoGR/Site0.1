@@ -56,10 +56,10 @@ async function runTests() {
 
   try {
     // -------------------------------------------------------------------------
-    // TESTE 1: GET /raw/1emfam (Script Público Existente)
+    // TESTE 1: GET /raw/w33umz (Script Principal Existente)
     // -------------------------------------------------------------------------
-    console.log('--- Teste 1: Script público existente (/raw/1emfam) ---');
-    const res1 = await fetchUrl('/raw/1emfam');
+    console.log('--- Teste 1: Script público existente (/raw/w33umz) ---');
+    const res1 = await fetchUrl('/raw/w33umz');
     assert(res1.status === 200, `Status HTTP deve ser 200 OK (recebido: ${res1.status})`);
     
     const contentType1 = (res1.headers['content-type'] || '').toLowerCase();
@@ -173,12 +173,12 @@ async function runTests() {
     // -------------------------------------------------------------------------
     // TESTE 8: Tolerância a case-insensitivity e extensão .lua
     // -------------------------------------------------------------------------
-    console.log('\n--- Teste 8: Case-insensitivity e extensão .lua (/raw/1EMFAM.lua) ---');
-    const res8 = await fetchUrl('/raw/1EMFAM.lua');
-    assert(res8.status === 200, `Status HTTP deve ser 200 OK para 1EMFAM.lua (recebido: ${res8.status})`);
+    console.log('\n--- Teste 8: Case-insensitivity e extensão .lua (/raw/W33UMZ.lua) ---');
+    const res8 = await fetchUrl('/raw/W33UMZ.lua');
+    assert(res8.status === 200, `Status HTTP deve ser 200 OK para W33UMZ.lua (recebido: ${res8.status})`);
     assert(
       res8.body.includes('InterfaceScript') || res8.body.includes('print('),
-      'Corpo deve ser o mesmo código Luau de 1emfam'
+      'Corpo deve ser o mesmo código Luau de w33umz'
     );
 
     console.log('\n======================================================');

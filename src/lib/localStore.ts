@@ -21,6 +21,155 @@ const DEFAULT_DEMO_USER: StoredUser = {
   accentColor: 'cyan',
 };
 
+const DEFAULT_DEMO_SCRIPTS: StoredScript[] = [
+  {
+    id: 'w33umz',
+    userId: 'user_demo_001',
+    authorUsername: 'demo',
+    title: 'GR Hub Luau',
+    category: 'Universal',
+    description: 'Script utilitário GR Hub com interface e módulos automáticos.',
+    code: `local INTERFACE_URL = "https://raw.githubusercontent.com/PequenoGR/Gr_Script/refs/heads/main/InterfaceScript"
+
+local ok, err = pcall(function()
+    local source = game:HttpGet(INTERFACE_URL)
+    if not source or source == "" then
+        error("Não foi possível baixar a interface (fonte vazia).")
+    end
+    local fn, compileErr = loadstring(source)
+    if not fn then
+        error("Erro ao compilar interface: " .. tostring(compileErr))
+    end
+    fn()
+end)
+
+if not ok then
+    warn("[GR Hub] Falha ao carregar a interface: " .. tostring(err))
+    return
+end
+
+local Hub = getgenv().GRHub
+if not Hub then
+    local tries = 0
+    repeat
+        task.wait(0.1)
+        tries = tries + 1
+        Hub = getgenv().GRHub
+    until Hub or tries >= 50
+end
+
+if not Hub then
+    warn("[GR Hub] A API (getgenv().GRHub) não foi exposta pela interface.")
+    return
+end
+
+print("[GR Hub] Inicializado com sucesso via ScriptsGR!")
+return Hub
+`,
+    thumbnailUrl: '',
+    isPasswordProtected: false,
+    accessKeys: [],
+    accessCount: 142,
+    lastAccessedAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'f7rt2f',
+    userId: 'user_demo_001',
+    authorUsername: 'demo',
+    title: 'Jeje',
+    category: 'Universal',
+    description: '',
+    code: `local INTERFACE_URL = "https://raw.githubusercontent.com/PequenoGR/Gr_Script/refs/heads/main/InterfaceScript"
+
+local ok, err = pcall(function()
+    local source = game:HttpGet(INTERFACE_URL)
+    if not source or source == "" then
+        error("Não foi possível baixar a interface (fonte vazia).")
+    end
+    local fn, compileErr = loadstring(source)
+    if not fn then
+        error("Erro ao compilar interface: " .. tostring(compileErr))
+    end
+    fn()
+end)
+
+if not ok then
+    warn("[GR Hub] Falha ao carregar a interface: " .. tostring(err))
+    return
+end
+
+local Hub = getgenv().GRHub
+if not Hub then
+    local tries = 0
+    repeat
+        task.wait(0.1)
+        tries = tries + 1
+        Hub = getgenv().GRHub
+    until Hub or tries >= 50
+end
+
+if not Hub then
+    warn("[GR Hub] A API (getgenv().GRHub) não foi exposta pela interface.")
+    return
+end
+
+print("[GR Hub] Carregado!")
+`,
+    thumbnailUrl: '',
+    isPasswordProtected: false,
+    accessKeys: [],
+    accessCount: 68,
+    lastAccessedAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'fly-speed-v2',
+    userId: 'user_demo_001',
+    authorUsername: 'demo',
+    title: 'Luau Speed & Fly Utility',
+    category: 'Universal',
+    description: 'Script utilitário em Luau com controle suave de movimentação, teleporte e notificações no console.',
+    code: `--[[
+    Luau Utility Script v2.4
+    Hospedado via ScriptsGR
+    Exemplo compatível com loadstring(game:HttpGet(...))()
+]]
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+local function notify(title, text)
+    print(string.format("[%s]: %s", title, text))
+end
+
+notify("ScriptsGR", "Script carregado com sucesso pelo loadstring!")
+
+local function setWalkSpeed(speed)
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid.WalkSpeed = speed
+        notify("Velocidade", "Ajustada para " .. tostring(speed))
+    end
+end
+
+setWalkSpeed(24)
+return { version = "2.4.0", status = "active" }
+`,
+    thumbnailUrl: '',
+    isPasswordProtected: false,
+    accessKeys: [],
+    accessCount: 195,
+    lastAccessedAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
+
 function getStoredUsers(): StoredUser[] {
   try {
     const raw = localStorage.getItem(LOCAL_USERS_KEY);
@@ -53,12 +202,17 @@ function getStoredScripts(): StoredScript[] {
   try {
     const raw = localStorage.getItem(LOCAL_SCRIPTS_KEY);
     if (!raw) {
-      return [];
+      localStorage.setItem(LOCAL_SCRIPTS_KEY, JSON.stringify(DEFAULT_DEMO_SCRIPTS));
+      return DEFAULT_DEMO_SCRIPTS;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      localStorage.setItem(LOCAL_SCRIPTS_KEY, JSON.stringify(DEFAULT_DEMO_SCRIPTS));
+      return DEFAULT_DEMO_SCRIPTS;
+    }
+    return parsed;
   } catch {
-    return [];
+    return DEFAULT_DEMO_SCRIPTS;
   }
 }
 

@@ -30,7 +30,13 @@ function isStaticOrNotFound(status: number, data: any): boolean {
   if (status === 404 || status === 502 || status === 503 || status === 504) return true;
   if (typeof data === 'string') {
     const lower = data.toLowerCase();
-    if (lower.includes('not_found') || lower.includes('could not be found') || lower.includes('<!doctype') || lower.includes('gru1::')) {
+    if (
+      lower.includes('not_found') ||
+      lower.includes('could not be found') ||
+      lower.includes('<!doctype') ||
+      lower.includes('<html') ||
+      lower.includes('gru1::')
+    ) {
       return true;
     }
   }
@@ -59,12 +65,21 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       headers,
     });
   } catch (err) {
+    console.warn(`[ScriptsGR API] Falha na rede para ${endpoint}. Ativando armazenamento local.`);
     fallbackToLocal = true;
     throw new Error('FALLBACK_TO_LOCAL');
   }
 
-  const isJson = response.headers.get('content-type')?.includes('application/json');
+  const contentType = response.headers.get('content-type') || '';
+  const isJson = contentType.includes('application/json');
   const data = isJson ? await response.json() : await response.text();
+
+  // If calling an API route but got HTML back (common in SPA fallback misconfigurations)
+  if (endpoint.startsWith('/api/') && (!isJson || (typeof data === 'string' && (data.includes('<!DOCTYPE') || data.includes('<html'))))) {
+    console.warn(`[ScriptsGR API] Endpoint ${endpoint} retornou HTML em vez de JSON. Ativando armazenamento local de contingência.`);
+    fallbackToLocal = true;
+    throw new Error('FALLBACK_TO_LOCAL');
+  }
 
   if (!response.ok) {
     if (isStaticOrNotFound(response.status, data)) {
@@ -89,8 +104,12 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ identifier, password }),
       });
-      authStorage.setToken(res.token);
-      authStorage.setUser(res.user);
+      if (res?.token) {
+        authStorage.setToken(res.token);
+      }
+      if (res?.user) {
+        authStorage.setUser(res.user);
+      }
       return res;
     } catch (err: any) {
       if (err.message === 'FALLBACK_TO_LOCAL' || fallbackToLocal) {
@@ -109,8 +128,12 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ username, email, password }),
       });
-      authStorage.setToken(res.token);
-      authStorage.setUser(res.user);
+      if (res?.token) {
+        authStorage.setToken(res.token);
+      }
+      if (res?.user) {
+        authStorage.setUser(res.user);
+      }
       return res;
     } catch (err: any) {
       if (err.message === 'FALLBACK_TO_LOCAL' || fallbackToLocal) {
@@ -126,7 +149,9 @@ export const api = {
   async getMe(): Promise<{ user: User }> {
     try {
       const res = await request<{ user: User }>('/api/auth/me');
-      authStorage.setUser(res.user);
+      if (res?.user) {
+        authStorage.setUser(res.user);
+      }
       return res;
     } catch (err: any) {
       if (err.message === 'FALLBACK_TO_LOCAL' || fallbackToLocal) {
@@ -150,7 +175,9 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(data),
       });
-      authStorage.setUser(res.user);
+      if (res?.user) {
+        authStorage.setUser(res.user);
+      }
       return res;
     } catch (err: any) {
       if (err.message === 'FALLBACK_TO_LOCAL' || fallbackToLocal) {
@@ -170,11 +197,19 @@ export const api = {
       if (params?.filter) query.set('filter', params.filter);
       if (params?.search) query.set('search', params.search);
       if (params?.scope) query.set('scope', params.scope);
-      return await request<{ scripts: ScriptItem[] }>(`/api/scripts?${query.toString()}`);
+      const res = await request<any>(`/api/scripts?${query.toString()}`);
+      const scripts: ScriptItem[] = Array.isArray(res?.scripts)
+        ? res.scripts
+        : Array.isArray(res)
+        ? res
+        : [];
+      return { scripts };
     } catch (err: any) {
       if (err.message === 'FALLBACK_TO_LOCAL' || fallbackToLocal) {
         const currentUser = authStorage.getUser();
-        return localStore.getScripts(params, currentUser?.id);
+        const localRes = localStore.getScripts(params, currentUser?.id);
+        const scripts: ScriptItem[] = Array.isArray(localRes?.scripts) ? localRes.scripts : [];
+        return { scripts };
       }
       throw err;
     }

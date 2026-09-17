@@ -134,10 +134,14 @@ router.get('/:id', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
-// POST /api/scripts - Create new script
-router.post('/', optionalAuth, scriptsLimiter, (req: AuthenticatedRequest, res: Response) => {
+// POST /api/scripts - Create new script (Requires Login so only the author can manage/delete it)
+router.post('/', requireAuth, scriptsLimiter, (req: AuthenticatedRequest, res: Response) => {
   try {
     const { title, category = '', description = '', code, thumbnailUrl = '', isPasswordProtected = false, password = '' } = req.body;
+
+    if (!req.user) {
+      return res.status(401).json({ error: 'Você precisa estar conectado à sua conta para publicar e gerenciar scripts.' });
+    }
 
     if (!title || typeof title !== 'string' || title.trim().length === 0) {
       return res.status(400).json({ error: 'O título do script é obrigatório.' });
@@ -170,8 +174,8 @@ router.post('/', optionalAuth, scriptsLimiter, (req: AuthenticatedRequest, res: 
     }
 
     const scriptId = db.generateUniqueId();
-    const userId = req.user ? req.user.id : ('guest_' + Date.now().toString(36));
-    const authorUsername = req.user ? req.user.username : 'Anônimo';
+    const userId = req.user.id;
+    const authorUsername = req.user.username;
 
     const newScript: Script = {
       id: scriptId,

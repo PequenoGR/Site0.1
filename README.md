@@ -85,7 +85,27 @@ npm start
 
 ## 🌐 Instruções para Deploy
 
-### Opção 1: Google Cloud Run / Docker
+### Opção 1: Cloudflare Workers (Recomendado)
+A aplicação conta com suporte nativo a Cloudflare Workers (`src/worker.ts`, `wrangler.jsonc`, `wrangler.toml`):
+
+1. Gere o build dos assets estáticos:
+```bash
+bun run build
+# ou
+npm run build
+```
+
+2. Publique com o Wrangler:
+```bash
+npx wrangler deploy
+```
+
+O Cloudflare Worker interceptará e responderá automaticamente:
+- `/raw/:id` -> Retorna texto puro Luau para o Roblox `loadstring`.
+- `/api/*` -> Responde todas as rotas REST em formato JSON estruturado.
+- `/` e rotas do frontend -> Serve os assets estáticos do Vite com fallback SPA.
+
+### Opção 2: Google Cloud Run / Docker
 A aplicação já vem pronta para rodar em containers na porta 3000:
 
 1. Crie ou utilize o Dockerfile da aplicação:

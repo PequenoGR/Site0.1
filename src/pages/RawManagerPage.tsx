@@ -54,9 +54,10 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
       setLoading(true);
       try {
         const res = await api.getScripts({ scope: 'mine' });
-        setScripts(res.scripts);
+        const list = Array.isArray(res?.scripts) ? res.scripts : [];
+        setScripts(list);
 
-        const targetId = initialScriptId || (res.scripts.length > 0 ? res.scripts[0].id : '');
+        const targetId = initialScriptId || (list.length > 0 ? list[0].id : '');
         if (targetId) {
           setSelectedScriptId(targetId);
         }

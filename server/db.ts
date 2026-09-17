@@ -57,6 +57,23 @@ try {
 
 function loadDatabase(): DatabaseSchema {
   try {
+    if (isServerless) {
+      if (!fs.existsSync(DB_FILE)) {
+        // First try to copy bundled data/db.json from repo
+        const bundledFile = path.join(process.cwd(), 'data', 'db.json');
+        if (fs.existsSync(bundledFile)) {
+          const raw = fs.readFileSync(bundledFile, 'utf-8');
+          fs.writeFileSync(DB_FILE, raw, 'utf-8');
+          return JSON.parse(raw);
+        }
+        const initialData: DatabaseSchema = seedInitialData();
+        fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
+        return initialData;
+      }
+      const raw = fs.readFileSync(DB_FILE, 'utf-8');
+      return JSON.parse(raw);
+    }
+
     if (!fs.existsSync(DB_FILE)) {
       const initialData: DatabaseSchema = seedInitialData();
       fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
