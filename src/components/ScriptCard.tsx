@@ -17,6 +17,7 @@ import {
 import { ScriptItem } from '../types';
 import { useToast } from './Toast';
 import { useTheme } from '../context/ThemeContext';
+import { copyToClipboard } from '../lib/clipboard';
 
 interface ScriptCardProps {
   script: ScriptItem;
@@ -53,25 +54,25 @@ export const ScriptCard: React.FC<ScriptCardProps> = ({
 
   const copyRawUrl = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    try {
-      await navigator.clipboard.writeText(rawUrl);
+    const success = await copyToClipboard(rawUrl);
+    if (success) {
       setCopiedRaw(true);
       showToast('Link RAW Copiado!', rawUrl);
       setTimeout(() => setCopiedRaw(false), 2000);
-    } catch {
-      showToast('Erro ao copiar', 'Falha ao acessar área de transferência.', 'error');
+    } else {
+      showToast('Erro ao copiar', 'Não foi possível copiar o link.', 'error');
     }
   };
 
   const copyLoadstring = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    try {
-      await navigator.clipboard.writeText(loadstringCode);
+    const success = await copyToClipboard(loadstringCode);
+    if (success) {
       setCopiedLoadstring(true);
       showToast('Loadstring Copiado!', 'Código pronto para ser executado no Luau.');
       setTimeout(() => setCopiedLoadstring(false), 2000);
-    } catch {
-      showToast('Erro ao copiar', 'Falha ao acessar área de transferência.', 'error');
+    } else {
+      showToast('Erro ao copiar', 'Não foi possível copiar o comando.', 'error');
     }
   };
 

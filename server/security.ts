@@ -68,6 +68,21 @@ export function resetPasswordRateLimit(ipOrId: string): void {
   passwordAttemptBuckets.delete(ipOrId);
 }
 
+// Cleanup expired buckets every 10 minutes to prevent memory leaks in production
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of ipBuckets.entries()) {
+    if (now > record.resetAt) {
+      ipBuckets.delete(key);
+    }
+  }
+  for (const [key, record] of passwordAttemptBuckets.entries()) {
+    if (now > record.resetAt) {
+      passwordAttemptBuckets.delete(key);
+    }
+  }
+}, 10 * 60 * 1000).unref();
+
 // Generate JWT token
 export function generateToken(payload: { id: string; username: string; email: string }): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });

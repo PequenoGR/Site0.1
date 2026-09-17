@@ -18,6 +18,7 @@ import { api } from '../lib/api';
 import { ScriptItem } from '../types';
 import { useToast } from '../components/Toast';
 import { useTheme } from '../context/ThemeContext';
+import { copyToClipboard } from '../lib/clipboard';
 
 interface EditScriptPageProps {
   scriptId: string;
@@ -338,9 +339,13 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(k.key);
-                          showToast('Chave copiada!', k.key);
+                        onClick={async () => {
+                          const success = await copyToClipboard(k.key);
+                          if (success) {
+                            showToast('Chave copiada!', k.key);
+                          } else {
+                            showToast('Erro ao copiar', 'Não foi possível copiar a chave', 'error');
+                          }
                         }}
                         className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-slate-100 border border-slate-700"
                         title="Copiar Chave"

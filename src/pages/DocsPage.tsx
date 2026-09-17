@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { useTheme } from '../context/ThemeContext';
+import { copyToClipboard } from '../lib/clipboard';
 
 export const DocsPage: React.FC = () => {
   const { mode, accentClasses } = useTheme();
@@ -47,13 +48,13 @@ else
 end`;
 
   const copyCode = async (text: string, setter: (val: boolean) => void) => {
-    try {
-      await navigator.clipboard.writeText(text);
+    const success = await copyToClipboard(text);
+    if (success) {
       setter(true);
       showToast('Copiado com sucesso!', 'Código pronto para a área de transferência.');
       setTimeout(() => setter(false), 2000);
-    } catch {
-      showToast('Erro ao copiar', 'Falha na área de transferência', 'error');
+    } else {
+      showToast('Erro ao copiar', 'Não foi possível acessar a área de transferência.', 'error');
     }
   };
 

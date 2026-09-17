@@ -3,6 +3,7 @@ import Editor, { OnMount } from '@monaco-editor/react';
 import { Copy, Trash2, Save, Maximize2, Minimize2, Check, Code2 } from 'lucide-react';
 import { useToast } from './Toast';
 import { useTheme } from '../context/ThemeContext';
+import { copyToClipboard } from '../lib/clipboard';
 
 interface LuauEditorProps {
   value: string;
@@ -60,12 +61,12 @@ export const LuauEditor: React.FC<LuauEditorProps> = ({
   }, [onSave]);
 
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(value);
+    const success = await copyToClipboard(value);
+    if (success) {
       setCopied(true);
       showToast('Código copiado!', 'O código Luau foi copiado para a área de transferência.');
       setTimeout(() => setCopied(false), 2000);
-    } catch {
+    } else {
       showToast('Erro ao copiar', 'Não foi possível acessar a área de transferência.', 'error');
     }
   };

@@ -18,6 +18,7 @@ import {
 import { LuauEditor } from '../components/LuauEditor';
 import { PasswordModal } from '../components/PasswordModal';
 import { api } from '../lib/api';
+import { copyToClipboard } from '../lib/clipboard';
 import { ScriptItem } from '../types';
 import { useToast } from '../components/Toast';
 import { useTheme } from '../context/ThemeContext';
@@ -73,24 +74,24 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
   const loadstringSnippet = `loadstring(game:HttpGet("${rawUrl}"))()`;
 
   const copyRaw = async () => {
-    try {
-      await navigator.clipboard.writeText(rawUrl);
+    const success = await copyToClipboard(rawUrl);
+    if (success) {
       setCopiedRaw(true);
       showToast('Link RAW Copiado!', rawUrl);
       setTimeout(() => setCopiedRaw(false), 2000);
-    } catch {
-      showToast('Erro ao copiar', 'Falha na área de transferência', 'error');
+    } else {
+      showToast('Erro ao copiar', 'Não foi possível copiar o link', 'error');
     }
   };
 
   const copyLoadstring = async () => {
-    try {
-      await navigator.clipboard.writeText(loadstringSnippet);
+    const success = await copyToClipboard(loadstringSnippet);
+    if (success) {
       setCopiedLoadstring(true);
       showToast('Loadstring Copiado!', 'Pronto para executar no Luau / Roblox.');
       setTimeout(() => setCopiedLoadstring(false), 2000);
-    } catch {
-      showToast('Erro ao copiar', 'Falha na área de transferência', 'error');
+    } else {
+      showToast('Erro ao copiar', 'Não foi possível copiar o comando', 'error');
     }
   };
 

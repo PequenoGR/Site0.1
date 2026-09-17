@@ -4,6 +4,7 @@ import { Lock, Key, Copy, Check, X, AlertTriangle, ShieldCheck } from 'lucide-re
 import { api } from '../lib/api';
 import { useToast } from './Toast';
 import { useTheme } from '../context/ThemeContext';
+import { copyToClipboard as copyUtil } from '../lib/clipboard';
 
 interface PasswordModalProps {
   scriptId: string;
@@ -58,9 +59,9 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
     }
   };
 
-  const copyToClipboard = async (text: string, type: 'key' | 'loadstring') => {
-    try {
-      await navigator.clipboard.writeText(text);
+  const handleCopy = async (text: string, type: 'key' | 'loadstring') => {
+    const success = await copyUtil(text);
+    if (success) {
       if (type === 'key') {
         setCopiedKey(true);
         setTimeout(() => setCopiedKey(false), 2000);
@@ -69,7 +70,7 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
         setTimeout(() => setCopiedLoadstring(false), 2000);
       }
       showToast('Copiado!', 'Copiado para a área de transferência.');
-    } catch {
+    } else {
       showToast('Erro ao copiar', 'Falha ao acessar área de transferência.', 'error');
     }
   };
@@ -185,7 +186,7 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
                     />
                     <button
                       id="btn-copy-unlocked-key"
-                      onClick={() => copyToClipboard(unlockedKey, 'key')}
+                      onClick={() => handleCopy(unlockedKey, 'key')}
                       className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700"
                     >
                       {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -206,7 +207,7 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
                     />
                     <button
                       id="btn-copy-unlocked-loadstring"
-                      onClick={() => copyToClipboard(loadstringWithKey, 'loadstring')}
+                      onClick={() => handleCopy(loadstringWithKey, 'loadstring')}
                       className={`px-3 py-2 rounded-xl font-bold text-slate-950 text-xs flex items-center gap-1.5 transition-colors shadow-sm ${accentClasses.primaryBg} ${accentClasses.primaryHover}`}
                     >
                       {copiedLoadstring ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}

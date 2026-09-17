@@ -131,7 +131,7 @@ router.get('/:id', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
 });
 
 // POST /api/scripts - Create new script
-router.post('/', requireAuth, scriptsLimiter, (req: AuthenticatedRequest, res: Response) => {
+router.post('/', optionalAuth, scriptsLimiter, (req: AuthenticatedRequest, res: Response) => {
   try {
     const { title, description = '', code, isPasswordProtected = false, password = '' } = req.body;
 
@@ -166,10 +166,13 @@ router.post('/', requireAuth, scriptsLimiter, (req: AuthenticatedRequest, res: R
     }
 
     const scriptId = db.generateUniqueId();
+    const userId = req.user ? req.user.id : ('guest_' + Date.now().toString(36));
+    const authorUsername = req.user ? req.user.username : 'Anônimo';
+
     const newScript: Script = {
       id: scriptId,
-      userId: req.user!.id,
-      authorUsername: req.user!.username,
+      userId,
+      authorUsername,
       title: title.trim().slice(0, 100),
       description: description.trim().slice(0, 500),
       code,

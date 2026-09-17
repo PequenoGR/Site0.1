@@ -20,6 +20,7 @@ import { ScriptItem } from '../types';
 import { api } from '../lib/api';
 import { useToast } from '../components/Toast';
 import { useTheme } from '../context/ThemeContext';
+import { copyToClipboard } from '../lib/clipboard';
 
 interface RawManagerPageProps {
   initialScriptId?: string;
@@ -96,8 +97,8 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
   const loadstringCode = selectedScript ? `loadstring(game:HttpGet("${rawUrl}"))()` : '';
 
   const handleCopy = async (text: string, type: 'raw' | 'loadstring') => {
-    try {
-      await navigator.clipboard.writeText(text);
+    const success = await copyToClipboard(text);
+    if (success) {
       if (type === 'raw') {
         setCopiedRaw(true);
         setTimeout(() => setCopiedRaw(false), 2000);
@@ -106,8 +107,8 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
         setTimeout(() => setCopiedLoadstring(false), 2000);
       }
       showToast('Copiado com sucesso!', text);
-    } catch {
-      showToast('Erro ao copiar', 'Falha na área de transferência.', 'error');
+    } else {
+      showToast('Erro ao copiar', 'Não foi possível acessar a área de transferência.', 'error');
     }
   };
 
