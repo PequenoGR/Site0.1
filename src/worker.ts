@@ -500,98 +500,94 @@ function generateAccessKey(): string {
     .join('');
 }
 
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
-    const method = request.method.toUpperCase();
-    const pathname = url.pathname;
+async function handleWorkerRequest(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const method = request.method.toUpperCase();
+  const pathname = url.pathname;
 
-    // Handle CORS Preflight OPTIONS
-    if (method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: corsHeaders });
+  const secret = env.JWT_SECRET || DEFAULT_JWT_SECRET;
+  const authHeader = request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '').trim();
+  const userAuth = authHeader ? await verifyToken(authHeader, secret) : null;
+
+  // =========================================================================
+  // 1. RAW LUAU SCRIPT ENDPOINT (/raw/:id and /api/raw/:id)
+  // =========================================================================
+  const lowerPath = pathname.toLowerCase();
+  if (lowerPath.startsWith('/raw') || lowerPath.startsWith('/api/raw')) {
+    let rawId = '';
+    const queryId = url.searchParams.get('id') || url.searchParams.get('scriptId');
+
+    if (queryId) {
+      rawId = queryId;
+    } else {
+      const cleanPath = pathname.replace(/^\/api\/raw\/?|^\/raw\/?/i, '');
+      const parts = cleanPath.split('/');
+      rawId = parts[0] || '';
     }
 
-    const secret = env.JWT_SECRET || DEFAULT_JWT_SECRET;
-    const authHeader = request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '').trim();
-    const userAuth = authHeader ? await verifyToken(authHeader, secret) : null;
+    const id = decodeURIComponent(rawId).trim().replace(/\.lua$/i, '');
 
-    // =========================================================================
-    // 1. RAW LUAU SCRIPT ENDPOINT (/raw/:id and /api/raw/:id)
-    // =========================================================================
-    if (pathname.startsWith('/raw') || pathname.startsWith('/api/raw')) {
-      let rawId = '';
-      const queryId = url.searchParams.get('id') || url.searchParams.get('scriptId');
-
-      if (queryId) {
-        rawId = queryId;
-      } else {
-        const parts = pathname.replace(/^\/api\/raw\/?|^\/raw\/?/, '').split('/');
-        rawId = parts[0] || '';
-      }
-
-      const id = rawId.trim().replace(/\.lua$/i, '');
-
-      if (!id) {
-        return textResponse('Script not found', 404);
-      }
-
-      const script = await findScript(env, id);
-
-      if (!script) {
-        return textResponse('Script not found', 404);
-      }
-
-      // Public script -> Deliver raw Luau code directly
-      if (!script.isPasswordProtected) {
-        script.accessCount = (script.accessCount || 0) + 1;
-        script.lastAccessedAt = new Date().toISOString();
-        return textResponse(script.code, 200);
-      }
-
-      // Protected script -> Check key or password
-      const queryKey = url.searchParams.get('key') || url.searchParams.get('token') || url.searchParams.get('access_key');
-      const queryPass = url.searchParams.get('pass') || url.searchParams.get('password') || url.searchParams.get('pwd');
-      const customKey = request.headers.get('x-script-key') || request.headers.get('x-access-key');
-
-      let isAuthorized = false;
-      const tokenCandidate = (queryKey || authHeader || customKey)?.trim();
-
-      if (tokenCandidate && script.accessKeys && script.accessKeys.length > 0) {
-        if (script.accessKeys.some((k) => k.key === tokenCandidate)) {
-          isAuthorized = true;
-        }
-      }
-
-      if (!isAuthorized && queryPass && script.accessKeys && script.accessKeys.length > 0) {
-        if (script.accessKeys.some((k) => k.key === queryPass.trim())) {
-          isAuthorized = true;
-        }
-      }
-
-      if (!isAuthorized && queryPass && script.passwordHash) {
-        try {
-          if (bcrypt.compareSync(queryPass, script.passwordHash)) {
-            isAuthorized = true;
-          }
-        } catch {}
-      }
-
-      if (!isAuthorized && queryKey && script.passwordHash) {
-        try {
-          if (bcrypt.compareSync(queryKey, script.passwordHash)) {
-            isAuthorized = true;
-          }
-        } catch {}
-      }
-
-      if (isAuthorized) {
-        script.accessCount = (script.accessCount || 0) + 1;
-        script.lastAccessedAt = new Date().toISOString();
-        return textResponse(script.code, 200);
-      }
-
-      return textResponse('Unauthorized', 401);
+    if (!id) {
+      return textResponse('Script not found', 404);
     }
+
+    const script = await findScript(env, id);
+
+    if (!script) {
+      return textResponse('Script not found', 404);
+    }
+
+    // Public script -> Deliver raw Luau code directly
+    if (!script.isPasswordProtected) {
+      script.accessCount = (script.accessCount || 0) + 1;
+      script.lastAccessedAt = new Date().toISOString();
+      return textResponse(script.code, 200);
+    }
+
+    // Protected script -> Check key or password
+    const queryKey = url.searchParams.get('key') || url.searchParams.get('token') || url.searchParams.get('access_key');
+    const queryPass = url.searchParams.get('pass') || url.searchParams.get('password') || url.searchParams.get('pwd');
+    const customKey = request.headers.get('x-script-key') || request.headers.get('x-access-key');
+
+    let isAuthorized = false;
+    const tokenCandidate = (queryKey || authHeader || customKey)?.trim();
+
+    if (tokenCandidate && script.accessKeys && script.accessKeys.length > 0) {
+      if (script.accessKeys.some((k) => k.key === tokenCandidate)) {
+        isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized && queryPass && script.accessKeys && script.accessKeys.length > 0) {
+      if (script.accessKeys.some((k) => k.key === queryPass.trim())) {
+        isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized && queryPass && script.passwordHash) {
+      try {
+        if (bcrypt.compareSync(queryPass, script.passwordHash)) {
+          isAuthorized = true;
+        }
+      } catch {}
+    }
+
+    if (!isAuthorized && queryKey && script.passwordHash) {
+      try {
+        if (bcrypt.compareSync(queryKey, script.passwordHash)) {
+          isAuthorized = true;
+        }
+      } catch {}
+    }
+
+    if (isAuthorized) {
+      script.accessCount = (script.accessCount || 0) + 1;
+      script.lastAccessedAt = new Date().toISOString();
+      return textResponse(script.code, 200);
+    }
+
+    return textResponse('Unauthorized', 401);
+  }
 
     // =========================================================================
     // 2. HEALTH CHECK (/api/health)
@@ -1090,5 +1086,31 @@ export default {
       status: 200,
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const method = request.method.toUpperCase();
+
+    // Handle CORS Preflight OPTIONS globally
+    if (method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders,
+      });
+    }
+
+    const response = await handleWorkerRequest(request, env);
+
+    // Handle HEAD method by returning identical headers with empty body
+    if (method === 'HEAD') {
+      return new Response(null, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+      });
+    }
+
+    return response;
   },
 };
