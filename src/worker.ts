@@ -490,6 +490,216 @@ function textResponse(text: string, status = 200, extraHeaders: Record<string, s
   });
 }
 
+function renderShieldHtml(scriptId: string, scriptTitle: string, author: string, isUnlocked = false, code = '', accessKey = ''): Response {
+  const origin = 'https://site0-1.marcosgermano193.workers.dev';
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${isUnlocked ? 'Script Desbloqueado' : 'Acesso Bloqueado'} • ScriptsGR Shield</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Nunito:wght@800;900&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #030712;
+      color: #f8fafc;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .card {
+      background: #0b1329;
+      border: 1px solid #1e293b;
+      border-radius: 1.25rem;
+      max-width: 32rem;
+      width: 100%;
+      padding: 2rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .badge-locked {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .badge-unlocked {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-top: 1rem;
+      color: #ffffff;
+    }
+    p {
+      color: #94a3b8;
+      font-size: 0.875rem;
+      line-height: 1.6;
+      margin-top: 0.5rem;
+    }
+    .script-info {
+      background: #030712;
+      border: 1px solid #1e293b;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin: 1.5rem 0;
+    }
+    .script-info-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8125rem;
+      padding: 0.25rem 0;
+    }
+    .script-info-label { color: #64748b; font-weight: 600; }
+    .script-info-val { color: #38bdf8; font-family: 'Fira Code', monospace; font-weight: 600; }
+    .input-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    input {
+      flex: 1;
+      background: #030712;
+      border: 1px solid #334155;
+      color: #fff;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      outline: none;
+    }
+    input:focus { border-color: #38bdf8; }
+    button {
+      background: #2563eb;
+      color: #fff;
+      font-weight: 700;
+      padding: 0.75rem 1.25rem;
+      border-radius: 0.75rem;
+      border: none;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background 0.15s;
+    }
+    button:hover { background: #1d4ed8; }
+    .code-box {
+      background: #030712;
+      border: 1px solid #1e293b;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.75rem;
+      color: #38bdf8;
+      overflow-x: auto;
+      max-height: 160px;
+      margin-top: 1rem;
+    }
+    .actions {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+    }
+    .btn-secondary {
+      background: #1e293b;
+      color: #cbd5e1;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75rem 1.25rem;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+      flex: 1;
+    }
+    .btn-secondary:hover { background: #334155; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1.125rem; color: #fff;">Scripts<span style="color:#ff3239;">GR</span></span>
+      <span class="badge ${isUnlocked ? 'badge-unlocked' : 'badge-locked'}">
+        ${isUnlocked ? '🛡️ Desbloqueado' : '🔒 Código Protegido'}
+      </span>
+    </div>
+
+    <h1>${isUnlocked ? 'Acesso Concedido' : 'Acesso Bloqueado'}</h1>
+    <p>
+      ${isUnlocked 
+        ? 'O script foi autenticado com sucesso. Você pode utilizá-lo via loadstring no executor do Roblox.' 
+        : 'Este script Luau possui proteção anti-vazamento de código-fonte. Não é possível visualizar ou inspecionar o código diretamente no navegador sem uma chave autorizada.'}
+    </p>
+
+    <div class="script-info">
+      <div class="script-info-row">
+        <span class="script-info-label">Identificador (ID):</span>
+        <span class="script-info-val">${scriptId}</span>
+      </div>
+      <div class="script-info-row">
+        <span class="script-info-label">Título:</span>
+        <span class="script-info-val" style="color: #fff;">${scriptTitle}</span>
+      </div>
+      <div class="script-info-row">
+        <span class="script-info-label">Autor:</span>
+        <span class="script-info-val" style="color: #cbd5e1;">@${author}</span>
+      </div>
+      <div class="script-info-row">
+        <span class="script-info-label">Status:</span>
+        <span class="script-info-val" style="color: ${isUnlocked ? '#34d399' : '#f87171'};">
+          ${isUnlocked ? 'Liberado para Execução' : 'Bloqueado (Anti-Leak Ativo)'}
+        </span>
+      </div>
+    </div>
+
+    ${!isUnlocked ? `
+      <form method="GET" action="/raw/${scriptId}">
+        <div style="font-size: 0.8125rem; color: #94a3b8; font-weight: 600; margin-bottom: 0.25rem;">Possui uma chave de acesso ou senha?</div>
+        <div class="input-group">
+          <input type="text" name="key" placeholder="Digite a Chave ou Senha..." required autocomplete="off" />
+          <button type="submit">Desbloquear</button>
+        </div>
+      </form>
+    ` : `
+      <div style="font-size: 0.8125rem; color: #94a3b8; font-weight: 600; margin-bottom: 0.25rem;">Comando Loadstring para Roblox:</div>
+      <div class="code-box">loadstring(game:HttpGet("${origin}/raw/${scriptId}${accessKey ? '?key=' + accessKey : ''}"))()</div>
+    `}
+
+    <div class="actions">
+      <a href="/#/dashboard" class="btn-secondary">Voltar ao Painel</a>
+      <a href="/#/view/${scriptId}" class="btn-secondary" style="background: #2563eb; color: #fff;">Abrir no ScriptsGR</a>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  return new Response(html, {
+    status: isUnlocked ? 200 : 401,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'X-Content-Type-Options': 'nosniff',
+      ...corsHeaders,
+    },
+  });
+}
+
 function generateId(prefix = ''): string {
   return prefix + Math.random().toString(36).substring(2, 8);
 }
@@ -580,13 +790,22 @@ async function handleWorkerRequest(request: Request, env: Env): Promise<Response
       } catch {}
     }
 
+    const isBrowser = request.headers.get('accept')?.includes('text/html') && !url.searchParams.get('mode') && !url.searchParams.get('download');
+
     if (isAuthorized) {
       script.accessCount = (script.accessCount || 0) + 1;
       script.lastAccessedAt = new Date().toISOString();
+      if (isBrowser) {
+        return renderShieldHtml(script.id, script.title, script.authorUsername, true, script.code, tokenCandidate || '');
+      }
       return textResponse(script.code, 200);
     }
 
-    return textResponse('Unauthorized', 401);
+    if (isBrowser) {
+      return renderShieldHtml(script.id, script.title, script.authorUsername, false);
+    }
+
+    return textResponse('Unauthorized\n-- [ScriptsGR Shield] Acesso Bloqueado: Este script possui proteção ativa. Forneça a chave (?key=...) ou senha (?pass=...).', 401);
   }
 
     // =========================================================================

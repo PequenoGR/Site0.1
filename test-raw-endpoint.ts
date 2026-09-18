@@ -155,8 +155,8 @@ async function runTests() {
       `Content-Type de erro 401 deve ser text/plain (recebido: ${res4.headers['content-type']})`
     );
     assert(
-      res4.body.trim() === 'Unauthorized',
-      `Corpo do 401 deve ser "Unauthorized" (recebido: "${res4.body.trim()}")`
+      res4.body.includes('Unauthorized'),
+      `Corpo do 401 deve conter "Unauthorized" (recebido: "${res4.body.trim()}")`
     );
 
     // -------------------------------------------------------------------------
@@ -196,8 +196,8 @@ async function runTests() {
     const res7 = await fetchUrl('/raw/admin-hub-vip?pass=senha_errada');
     assert(res7.status === 401, `Status HTTP deve ser 401 Unauthorized (recebido: ${res7.status})`);
     assert(
-      res7.body.trim() === 'Unauthorized',
-      `Corpo deve ser "Unauthorized" (recebido: "${res7.body.trim()}")`
+      res7.body.includes('Unauthorized'),
+      `Corpo deve conter "Unauthorized" (recebido: "${res7.body.trim()}")`
     );
 
     // -------------------------------------------------------------------------
