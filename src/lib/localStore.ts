@@ -335,8 +335,15 @@ export const localStore = {
     if (!script) {
       throw new Error('Script não encontrado.');
     }
-    if (script.passwordPlain && script.passwordPlain !== pass) {
-      throw new Error('Senha incorreta.');
+    if (!script.isPasswordProtected) {
+      return {
+        message: 'Script público desbloqueado.',
+        code: script.code || '',
+      };
+    }
+    const cleanPass = pass ? pass.trim() : '';
+    if (!cleanPass || !script.passwordPlain || script.passwordPlain !== cleanPass) {
+      throw new Error('Senha incorreta para este script.');
     }
     return {
       message: 'Script desbloqueado com sucesso!',

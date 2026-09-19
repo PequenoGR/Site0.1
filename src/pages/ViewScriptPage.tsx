@@ -87,13 +87,13 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
   const handleUnlock = async () => {
     if (!passwordInput.trim()) return;
     try {
-      const res = await api.getScriptById(scriptId, passwordInput.trim());
-      setScript(res.script);
+      const res = await api.unlockScript(scriptId, passwordInput.trim());
+      setScript((prev) => (prev ? { ...prev, code: res.code } : null));
       setIsUnlocked(true);
       setUnlockModalOpen(false);
-      showToast('Desbloqueado!', 'Código descriptografado com sucesso.');
+      showToast('Desbloqueado!', 'Código liberado com sucesso.');
     } catch (err: any) {
-      showToast('Senha incorreta', err.message, 'error');
+      showToast('Senha incorreta', err.message || 'Senha incorreta para este script.', 'error');
     }
   };
 
@@ -104,6 +104,10 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
       </div>
     );
   }
+
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://scriptsgr.dev';
+  const rawUrl = `${origin}/raw/${script.id}`;
+  const loadstringSnippet = `loadstring(game:HttpGet("${rawUrl}"))()`;
 
   return (
     <div className="w-full min-h-[calc(100vh-65px)] bg-black text-white flex flex-col items-center justify-center p-4 sm:p-6 pb-16 select-none">
@@ -120,15 +124,21 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
             <span>Voltar</span>
           </button>
 
-          <button
-            type="button"
-            id="btn-view-goto-edit"
-            onClick={() => onNavigate('edit', script.id)}
-            className="flex items-center gap-1 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors"
-          >
-            <Edit className="w-3.5 h-3.5" />
-            <span>Editar</span>
-          </button>
+          {script.isOwner ? (
+            <button
+              type="button"
+              id="btn-view-goto-edit"
+              onClick={() => onNavigate('edit', script.id)}
+              className="flex items-center gap-1 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              <Edit className="w-3.5 h-3.5" />
+              <span>Editar</span>
+            </button>
+          ) : (
+            <span className="text-[11px] font-semibold text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded-md border border-slate-700/60">
+              Autor: @{script.authorUsername || 'Anônimo'}
+            </span>
+          )}
         </div>
 
         {/* 1. Upload Photo / Script Photo Container */}
@@ -253,16 +263,44 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
           )}
         </div>
 
-        {/* 6. Primary Action Button to Edit or Copy */}
+        {/* 6. Primary Action Button */}
         <div className="w-full pt-2">
-          <button
-            id="btn-view-primary-action"
-            type="button"
-            onClick={() => onNavigate('edit', script.id)}
-            className="w-full py-2.5 sm:py-3 rounded-xl bg-[#2e52b2] hover:bg-[#3760cc] active:scale-[0.98] text-white font-extrabold text-sm sm:text-base tracking-wide transition-all shadow-lg flex items-center justify-center gap-2"
-          >
-            <span>Editar Script</span>
-          </button>
+          {script.isOwner ? (
+            <button
+              id="btn-view-primary-action"
+              type="button"
+              onClick={() => onNavigate('edit', script.id)}
+              className="w-full py-2.5 sm:py-3 rounded-xl bg-[#2e52b2] hover:bg-[#3760cc] active:scale-[0.98] text-white font-extrabold text-sm sm:text-base tracking-wide transition-all shadow-lg flex items-center justify-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              <span>Editar Script</span>
+            </button>
+          ) : script.isPasswordProtected && !isUnlocked ? (
+            <button
+              id="btn-view-primary-action"
+              type="button"
+              onClick={() => setUnlockModalOpen(true)}
+              className="w-full py-2.5 sm:py-3 rounded-xl bg-amber-600 hover:bg-amber-500 active:scale-[0.98] text-white font-extrabold text-sm sm:text-base tracking-wide transition-all shadow-lg flex items-center justify-center gap-2"
+            >
+              <KeyRound className="w-4 h-4" />
+              <span>Desbloquear com Senha</span>
+            </button>
+          ) : (
+            <button
+              id="btn-view-primary-action"
+              type="button"
+              onClick={async () => {
+                const ok = await copyToClipboard(loadstringSnippet);
+                if (ok) {
+                  showToast('Loadstring Copiado!', 'Código de carregamento copiado com sucesso.');
+                }
+              }}
+              className="w-full py-2.5 sm:py-3 rounded-xl bg-[#2e52b2] hover:bg-[#3760cc] active:scale-[0.98] text-white font-extrabold text-sm sm:text-base tracking-wide transition-all shadow-lg flex items-center justify-center gap-2"
+            >
+              <Copy className="w-4 h-4" />
+              <span>Copiar Loadstring</span>
+            </button>
+          )}
         </div>
       </div>
 

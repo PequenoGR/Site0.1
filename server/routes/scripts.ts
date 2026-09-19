@@ -29,11 +29,11 @@ router.get('/', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
 
     let scripts: Script[] = [];
 
-    if (req.user && scope !== 'explore') {
+    if (scope === 'mine' && req.user) {
       scripts = db.getUserScripts(req.user.id);
     } else {
-      // Return public scripts for explore or guests
-      scripts = db.getScripts().filter(s => !s.isPasswordProtected || (req.user && s.userId === req.user.id));
+      // Return all published scripts so every user sees everything on dashboard
+      scripts = db.getScripts();
     }
 
     // Apply visibility filter
@@ -48,8 +48,10 @@ router.get('/', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
       const q = search.trim().toLowerCase();
       scripts = scripts.filter(s =>
         s.title.toLowerCase().includes(q) ||
+        (s.category && s.category.toLowerCase().includes(q)) ||
         s.description.toLowerCase().includes(q) ||
-        s.id.toLowerCase().includes(q)
+        s.id.toLowerCase().includes(q) ||
+        (s.authorUsername && s.authorUsername.toLowerCase().includes(q))
       );
     }
 
@@ -94,7 +96,7 @@ router.get('/', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
 router.get('/:id', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { key, password } = req.query as { key?: string; password?: string };
+    const { key, password, pass } = req.query as { key?: string; password?: string; pass?: string };
     const script = db.getScriptById(id);
 
     if (!script) {
@@ -109,13 +111,25 @@ router.get('/:id', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
     );
 
     let isAuthorized = false;
+    const candidatePass = (password || pass)?.trim();
+    const candidateKey = key?.trim();
 
     if (!script.isPasswordProtected || isOwner) {
       isAuthorized = true;
-    } else if (key && script.accessKeys.some(k => k.key === key)) {
+    } else if (candidateKey && script.accessKeys && script.accessKeys.some(k => k.key === candidateKey)) {
       isAuthorized = true;
-    } else if (password && script.passwordHash && bcrypt.compareSync(password, script.passwordHash)) {
-      isAuthorized = true;
+    } else if (candidatePass && script.passwordHash && typeof candidatePass === 'string' && candidatePass.length > 0) {
+      try {
+        if (bcrypt.compareSync(candidatePass, script.passwordHash)) {
+          isAuthorized = true;
+        }
+      } catch {}
+    } else if (candidateKey && script.passwordHash && typeof candidateKey === 'string' && candidateKey.length > 0) {
+      try {
+        if (bcrypt.compareSync(candidateKey, script.passwordHash)) {
+          isAuthorized = true;
+        }
+      } catch {}
     }
 
     return res.json({
@@ -368,7 +382,8 @@ router.delete('/:id', requireAuth, (req: AuthenticatedRequest, res: Response) =>
 router.post('/:id/unlock', (req, res) => {
   try {
     const { id } = req.params;
-    const { password } = req.body;
+    const { password, pass, key } = req.body;
+    const candidate = (password || pass || key);
     const ip = req.ip || req.socket.remoteAddress || 'unknown';
 
     if (!checkPasswordRateLimit(`unlock:${id}:${ip}`)) {
@@ -389,7 +404,13 @@ router.post('/:id/unlock', (req, res) => {
       });
     }
 
-    if (!script.passwordHash || !bcrypt.compareSync(password, script.passwordHash)) {
+    if (!candidate || typeof candidate !== 'string' || candidate.trim().length === 0) {
+      return res.status(400).json({ error: 'Digite a senha do script.' });
+    }
+
+    const cleanCandidate = candidate.trim();
+
+    if (!script.passwordHash || !bcrypt.compareSync(cleanCandidate, script.passwordHash)) {
       return res.status(401).json({ error: 'Senha incorreta para este script.' });
     }
 
