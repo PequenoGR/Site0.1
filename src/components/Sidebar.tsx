@@ -25,7 +25,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setIsOpenMobile,
 }) => {
   const { user, logout } = useAuth();
-  const { mode, accentClasses } = useTheme();
+  const { mode, accentInfo } = useTheme();
 
   const navItems = [
     { id: 'dashboard', label: 'Painel de Scripts', icon: LayoutDashboard },
@@ -63,7 +63,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           id="btn-sidebar-create"
           onClick={() => handleNav('create')}
-          className="w-full py-2.5 px-4 mb-5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md active:scale-98"
+          style={{
+            backgroundColor: accentInfo.accentHex,
+          }}
+          className="w-full py-2.5 px-4 mb-5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 text-white transition-all shadow-md active:scale-98"
         >
           <PlusCircle className="w-4 h-4" />
           <span>Criar Script</span>
@@ -82,13 +85,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 key={item.id}
                 id={`nav-item-${item.id}`}
                 onClick={() => handleNav(item.id)}
+                style={
+                  isActive
+                    ? {
+                        backgroundColor: accentInfo.slotBgHex,
+                        color: accentInfo.accentHex,
+                        borderColor: accentInfo.accentHex,
+                      }
+                    : {}
+                }
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-left ${
                   isActive
-                    ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold shadow-sm'
+                    ? 'border font-bold shadow-sm'
                     : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-blue-400' : 'text-slate-400'}`} />
+                <Icon
+                  style={isActive ? { color: accentInfo.accentHex } : {}}
+                  className={`w-4 h-4 ${isActive ? '' : 'text-slate-400'}`}
+                />
                 <span>{item.label}</span>
               </button>
             );
@@ -97,11 +112,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* User Info & Bottom Controls */}
-      <div className="pt-4 border-t border-slate-800/80">
+      <div className="pt-4 border-t border-slate-800/80 space-y-3">
         {user ? (
           <div className="space-y-3">
             <div className="flex items-center gap-3 px-2">
-              <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-blue-400">
+              <div
+                style={{ borderColor: accentInfo.accentHex, color: accentInfo.accentHex }}
+                className="w-8 h-8 rounded-full bg-slate-800 border flex items-center justify-center font-bold text-xs"
+              >
                 {user.username.substring(0, 2).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
@@ -123,7 +141,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="space-y-2">
             <button
               onClick={() => handleNav('login')}
-              className="w-full py-2 px-3 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-all"
+              style={{
+                backgroundColor: accentInfo.accentHex,
+              }}
+              className="w-full py-2 px-3 rounded-xl text-xs font-bold text-white transition-all"
             >
               Entrar na Conta
             </button>

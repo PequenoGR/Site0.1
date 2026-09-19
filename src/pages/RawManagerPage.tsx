@@ -20,6 +20,7 @@ import { ScriptItem } from '../types';
 import { api } from '../lib/api';
 import { useToast } from '../components/Toast';
 import { useTheme } from '../context/ThemeContext';
+import { useAppVersion } from '../context/VersionContext';
 import { copyToClipboard } from '../lib/clipboard';
 
 interface RawManagerPageProps {
@@ -28,8 +29,9 @@ interface RawManagerPageProps {
 }
 
 export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId, onNavigate }) => {
-  const { mode, accentClasses } = useTheme();
+  const { mode, accentClasses, accentInfo } = useTheme();
   const { showToast } = useToast();
+  const { incrementVersion } = useAppVersion();
 
   const [scripts, setScripts] = useState<ScriptItem[]>([]);
   const [selectedScriptId, setSelectedScriptId] = useState<string>(initialScriptId || '');
@@ -102,9 +104,11 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
     if (success) {
       if (type === 'raw') {
         setCopiedRaw(true);
+        incrementVersion('Cópia de Link RAW');
         setTimeout(() => setCopiedRaw(false), 2000);
       } else {
         setCopiedLoadstring(true);
+        incrementVersion('Cópia de Loadstring');
         setTimeout(() => setCopiedLoadstring(false), 2000);
       }
       showToast('Copiado com sucesso!', text);
@@ -120,6 +124,7 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
     setCreatingKey(true);
     try {
       const res = await api.createAccessKey(selectedScriptId, newKeyName.trim());
+      incrementVersion(`Chave criada: ${newKeyName.trim()}`);
       showToast('Chave criada!', `Token gerado: ${res.accessKey.key}`);
       setNewKeyName('');
       const fresh = await api.getScriptById(selectedScriptId);
@@ -137,6 +142,7 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
     if (!window.confirm('Deseja realmente revogar este token de acesso?')) return;
     try {
       await api.revokeAccessKey(selectedScriptId, key);
+      incrementVersion('Chave revogada');
       showToast('Chave revogada!', 'O token foi cancelado.');
       const fresh = await api.getScriptById(selectedScriptId);
       setSelectedScript(fresh.script);
@@ -154,6 +160,7 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
     try {
       const res = await api.fetchRaw(selectedScriptId, selectedScript?.isPasswordProtected ? selectedKey : undefined);
       setTestResult(res);
+      incrementVersion('Teste RAW executado');
       showToast(
         res.status === 200 ? 'Teste 200 OK' : `Teste Status ${res.status}`,
         res.status === 200 ? 'Código Luau recebido com sucesso!' : 'Acesso negado conforme esperado.'

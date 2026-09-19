@@ -10,6 +10,8 @@ import { ConsoleScriptCard } from '../components/ConsoleScriptCard';
 import { ScriptDetailModal } from '../components/ScriptDetailModal';
 import { PasswordModal } from '../components/PasswordModal';
 import { useToast } from '../components/Toast';
+import { useTheme } from '../context/ThemeContext';
+import { useAppVersion } from '../context/VersionContext';
 
 interface DashboardPageProps {
   onNavigate: (tab: string, scriptId?: string) => void;
@@ -18,6 +20,8 @@ interface DashboardPageProps {
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, searchQuery = '' }) => {
   const { showToast } = useToast();
+  const { accentInfo } = useTheme();
+  const { incrementVersion } = useAppVersion();
 
   const [scripts, setScripts] = useState<ScriptItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +65,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, search
     }
     try {
       await api.deleteScript(id);
+      incrementVersion('Script excluído');
       showToast('Script excluído!', 'O script e seus links RAW foram removidos com sucesso.');
       setScripts((prev) => prev.filter((s) => s.id !== id));
     } catch (err: any) {
@@ -68,26 +73,40 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, search
     }
   };
 
+  const handleSearchSubmit = () => {
+    incrementVersion('Pesquisa realizada');
+    fetchScripts();
+  };
+
   return (
     <div className="space-y-5">
-      {/* Console Search Bar matching image */}
-      <div className="bg-[#0b1222] border border-[#1e3a8a]/70 rounded-2xl p-2 sm:p-2.5 flex items-center gap-3 shadow-xl max-w-5xl mx-auto w-full">
-        <Search className="w-5 h-5 text-cyan-400 ml-2 shrink-0" />
+      {/* Console Search Bar */}
+      <div
+        style={{
+          borderColor: accentInfo.accentHex,
+          boxShadow: `0 0 25px ${accentInfo.glowRgba}`,
+        }}
+        className="bg-[#111827]/90 border-2 rounded-2xl p-1.5 sm:p-2 pl-4 sm:pl-5 flex items-center gap-3 max-w-4xl mx-auto w-full my-4 sm:my-6 transition-all duration-300"
+      >
+        <Search style={{ color: accentInfo.accentHex }} className="w-5 sm:w-6 h-5 sm:h-6 shrink-0" />
         <input
           id="input-console-search"
           type="text"
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') fetchScripts();
+            if (e.key === 'Enter') handleSearchSubmit();
           }}
           placeholder="Pesquisar scripts..."
-          className="w-full bg-transparent border-none text-white text-sm sm:text-base placeholder-slate-400 focus:outline-none"
+          className="w-full bg-transparent border-none text-slate-100 text-sm sm:text-base placeholder-slate-400 focus:outline-none"
         />
         <button
           id="btn-console-search"
-          onClick={fetchScripts}
-          className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors shrink-0 shadow-md active:scale-95"
+          onClick={handleSearchSubmit}
+          style={{
+            backgroundColor: accentInfo.accentHex,
+          }}
+          className="text-white font-extrabold px-6 py-2 sm:py-2.5 rounded-xl text-sm sm:text-base transition-all shrink-0 shadow-md active:scale-95"
         >
           Pesquisar
         </button>
@@ -96,7 +115,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, search
       {/* Script Grid matching screenshot (4-columns) */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-          <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-3" />
+          <div
+            style={{ borderColor: accentInfo.accentHex, borderTopColor: 'transparent' }}
+            className="w-8 h-8 border-2 rounded-full animate-spin mb-3"
+          />
           <p className="text-sm font-medium">Carregando scripts...</p>
         </div>
       ) : (!Array.isArray(scripts) || scripts.length === 0) ? (
@@ -111,7 +133,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, search
           <button
             id="btn-empty-create"
             onClick={() => onNavigate('create')}
-            className="px-4 py-2 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-2 shadow-lg"
+            style={{
+              backgroundColor: accentInfo.accentHex,
+            }}
+            className="px-4 py-2 rounded-xl font-bold text-xs text-white flex items-center gap-2 shadow-lg"
           >
             <Plus className="w-4 h-4" />
             <span>Adicionar Script</span>
@@ -123,7 +148,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, search
             <ConsoleScriptCard
               key={script.id}
               script={script}
-              onClick={(s) => setSelectedModalScript(s)}
+              onClick={(s) => {
+                incrementVersion(`Script selecionado: ${s.title}`);
+                setSelectedModalScript(s);
+              }}
             />
           ))}
         </div>
@@ -148,6 +176,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, search
           isOpen={Boolean(unlockTarget)}
           onClose={() => setUnlockTarget(null)}
           onUnlocked={() => {
+            incrementVersion('Script desbloqueado');
             fetchScripts();
           }}
         />

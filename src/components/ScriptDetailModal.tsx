@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { ScriptItem } from '../types';
 import { useToast } from './Toast';
+import { useTheme } from '../context/ThemeContext';
+import { useAppVersion } from '../context/VersionContext';
 import { copyToClipboard } from '../lib/clipboard';
 import { formatConsoleTime } from './ConsoleScriptCard';
 
@@ -39,6 +41,8 @@ export const ScriptDetailModal: React.FC<ScriptDetailModalProps> = ({
   onManageRaw,
 }) => {
   const { showToast } = useToast();
+  const { accentInfo } = useTheme();
+  const { incrementVersion } = useAppVersion();
   const [copiedRaw, setCopiedRaw] = useState(false);
   const [copiedLoadstring, setCopiedLoadstring] = useState(false);
 
@@ -57,6 +61,7 @@ export const ScriptDetailModal: React.FC<ScriptDetailModalProps> = ({
     const success = await copyToClipboard(rawUrl);
     if (success) {
       setCopiedRaw(true);
+      incrementVersion('Cópia de Link RAW');
       showToast('Link RAW Copiado!', rawUrl);
       setTimeout(() => setCopiedRaw(false), 2000);
     }
@@ -66,6 +71,7 @@ export const ScriptDetailModal: React.FC<ScriptDetailModalProps> = ({
     const success = await copyToClipboard(loadstringCode);
     if (success) {
       setCopiedLoadstring(true);
+      incrementVersion('Cópia de Loadstring');
       showToast('Loadstring Copiado!', 'Pronto para colar e executar no seu exploit Luau.');
       setTimeout(() => setCopiedLoadstring(false), 2000);
     }
@@ -78,7 +84,7 @@ export const ScriptDetailModal: React.FC<ScriptDetailModalProps> = ({
         onClick={onClose}
       />
       <div
-        className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200"
+        className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200"
       >
         {/* Header with image or badge */}
         <div className="relative h-44 bg-black flex items-center justify-center overflow-hidden border-b border-slate-800">
@@ -98,19 +104,19 @@ export const ScriptDetailModal: React.FC<ScriptDetailModalProps> = ({
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 p-2 rounded-full bg-black/70 hover:bg-black text-white border border-white/20 transition-colors"
+            className="absolute top-3 right-3 p-2 rounded-xl bg-black/70 hover:bg-black text-white border border-white/20 transition-colors"
             title="Fechar"
           >
             <X className="w-4 h-4" />
           </button>
 
-          {/* Top Pill Badges on image */}
+          {/* Top Badges on image */}
           <div className="absolute bottom-3 left-3 flex items-center gap-2">
-            <div className="bg-black/80 rounded-full px-2.5 py-0.5 flex items-center gap-1.5 text-xs font-black text-white shadow-md">
+            <div className="bg-black/80 rounded-md px-2.5 py-1 flex items-center gap-1.5 text-xs font-black text-white shadow-md">
               <Eye className="w-3.5 h-3.5 text-white" />
               <span>{script.accessCount || 0} visualizações</span>
             </div>
-            <div className="bg-black/80 rounded-full px-2.5 py-0.5 flex items-center gap-1.5 text-xs font-black text-white shadow-md">
+            <div className="bg-black/80 rounded-md px-2.5 py-1 flex items-center gap-1.5 text-xs font-black text-white shadow-md">
               <Clock className="w-3.5 h-3.5 text-white" />
               <span>{formatConsoleTime(script.createdAt)}</span>
             </div>
@@ -121,7 +127,7 @@ export const ScriptDetailModal: React.FC<ScriptDetailModalProps> = ({
         <div className="p-5 space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 {script.isPasswordProtected ? (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
                     <Lock className="w-3 h-3" />
@@ -136,6 +142,11 @@ export const ScriptDetailModal: React.FC<ScriptDetailModalProps> = ({
                 <span className="text-xs font-mono text-cyan-400 font-bold">
                   ID: {script.id}
                 </span>
+                {script.authorUsername && (
+                  <span className="text-[11px] font-semibold text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded-md border border-slate-700/60">
+                    Autor: @{script.authorUsername}
+                  </span>
+                )}
               </div>
               <h2 className="text-lg font-black text-white tracking-tight">
                 {script.title}
@@ -198,7 +209,7 @@ export const ScriptDetailModal: React.FC<ScriptDetailModalProps> = ({
               </button>
             </div>
 
-            {script.isOwner && (
+            {script.isOwner ? (
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => {
@@ -221,6 +232,10 @@ export const ScriptDetailModal: React.FC<ScriptDetailModalProps> = ({
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
+            ) : (
+              <span className="text-[11px] text-slate-500">
+                🔒 Somente o criador pode apagar
+              </span>
             )}
           </div>
         </div>

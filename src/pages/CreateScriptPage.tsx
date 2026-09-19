@@ -17,6 +17,7 @@ import {
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
+import { useAppVersion } from '../context/VersionContext';
 import { copyToClipboard } from '../lib/clipboard';
 
 interface CreateScriptPageProps {
@@ -38,6 +39,7 @@ const CATEGORIES = [
 export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }) => {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { incrementVersion } = useAppVersion();
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Geral');
@@ -95,6 +97,7 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    incrementVersion('Download de script');
     showToast('Download iniciado', `${safeName}.lua foi baixado.`);
   };
 
@@ -107,6 +110,7 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
     const success = await copyToClipboard(code);
     if (success) {
       setCopied(true);
+      incrementVersion('Cópia de código');
       showToast('Copiado!', 'Código copiado para a área de transferência.');
       setTimeout(() => setCopied(false), 2000);
     }
@@ -146,6 +150,7 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
         password: hasPassword ? password : '',
       });
 
+      incrementVersion(`Script criado: ${res.script.title}`);
       showToast('Script criado com sucesso!', `Script ${res.script.title} registrado e vinculado à sua conta.`);
       onNavigate('dashboard');
     } catch (err: any) {

@@ -4,7 +4,7 @@ export interface User {
   email: string;
   createdAt: string;
   themePreference?: 'dark' | 'light';
-  accentColor?: 'cyan' | 'emerald' | 'violet' | 'amber' | 'rose' | 'blue';
+  accentColor?: 'cyan' | 'emerald' | 'violet' | 'amber' | 'rose' | 'blue' | 'red' | 'pink';
 }
 
 export interface AccessKey {
@@ -17,6 +17,7 @@ export interface ScriptItem {
   id: string;
   userId: string;
   authorUsername: string;
+  authorEmail?: string;
   title: string;
   category?: string;
   description: string;
@@ -35,7 +36,7 @@ export interface ScriptItem {
 }
 
 export type ThemeMode = 'dark' | 'light';
-export type AccentColor = 'cyan' | 'emerald' | 'violet' | 'amber' | 'rose' | 'blue';
+export type AccentColor = 'cyan' | 'emerald' | 'violet' | 'amber' | 'rose' | 'blue' | 'red' | 'pink';
 
 export interface ToastMessage {
   id: string;

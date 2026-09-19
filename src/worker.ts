@@ -63,6 +63,94 @@ const INITIAL_USERS: User[] = [
 
 const INITIAL_SCRIPTS: Script[] = [
   {
+    id: 'blox-fruit',
+    userId: 'user_demo_001',
+    authorUsername: 'demo',
+    title: 'Blox Fruit',
+    category: 'Blox Fruit',
+    description: 'Auto Farm, Raid, Mastery e Sea Events para Blox Fruits.',
+    code: `local INTERFACE_URL = "https://raw.githubusercontent.com/PequenoGR/Gr_Script/refs/heads/main/InterfaceScript"
+local ok, err = pcall(function()
+    local source = game:HttpGet(INTERFACE_URL)
+    local fn = loadstring(source)
+    if fn then fn() end
+end)
+print("[ScriptsGR] Blox Fruit Script carregado!")`,
+    thumbnailUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&auto=format&fit=crop&q=80',
+    isPasswordProtected: false,
+    accessKeys: [],
+    accessCount: 200,
+    lastAccessedAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'universal',
+    userId: 'user_demo_001',
+    authorUsername: 'demo',
+    title: 'Universal',
+    category: 'Universal',
+    description: 'Módulos universais de ESP, Fly, Speed e utilitários.',
+    code: `local INTERFACE_URL = "https://raw.githubusercontent.com/PequenoGR/Gr_Script/refs/heads/main/InterfaceScript"
+local ok, err = pcall(function()
+    local source = game:HttpGet(INTERFACE_URL)
+    local fn = loadstring(source)
+    if fn then fn() end
+end)
+print("[ScriptsGR] Universal Script carregado!")`,
+    thumbnailUrl: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=600&auto=format&fit=crop&q=80',
+    isPasswordProtected: false,
+    accessKeys: [],
+    accessCount: 30,
+    lastAccessedAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'roube-um-egg',
+    userId: 'user_demo_001',
+    authorUsername: 'demo',
+    title: 'Roube um Egg',
+    category: 'Roube um Egg',
+    description: 'Auto hatch, auto steal e multiplicador de ovos.',
+    code: `local INTERFACE_URL = "https://raw.githubusercontent.com/PequenoGR/Gr_Script/refs/heads/main/InterfaceScript"
+local ok, err = pcall(function()
+    local source = game:HttpGet(INTERFACE_URL)
+    local fn = loadstring(source)
+    if fn then fn() end
+end)
+print("[ScriptsGR] Roube um Egg Script carregado!")`,
+    thumbnailUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
+    isPasswordProtected: false,
+    accessKeys: [],
+    accessCount: 249,
+    lastAccessedAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'roube-um-brainrot',
+    userId: 'user_demo_001',
+    authorUsername: 'demo',
+    title: 'Roube um Brainrot',
+    category: 'Roube um Brainrot',
+    description: 'Auto farm de dinheiro, secret pets e teleporte.',
+    code: `local INTERFACE_URL = "https://raw.githubusercontent.com/PequenoGR/Gr_Script/refs/heads/main/InterfaceScript"
+local ok, err = pcall(function()
+    local source = game:HttpGet(INTERFACE_URL)
+    local fn = loadstring(source)
+    if fn then fn() end
+end)
+print("[ScriptsGR] Roube um Brainrot Script carregado!")`,
+    thumbnailUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=600&auto=format&fit=crop&q=80',
+    isPasswordProtected: false,
+    accessKeys: [],
+    accessCount: 333,
+    lastAccessedAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 30 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
     id: 'w33umz',
     userId: 'user_demo_001',
     authorUsername: 'demo',

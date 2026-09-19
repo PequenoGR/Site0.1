@@ -55,11 +55,17 @@ router.get('/', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
 
     // Format output (hide password hashes!)
     const sanitized = scripts.map(s => {
-      const isOwner = req.user && req.user.id === s.userId;
+      const isOwner = Boolean(
+        req.user && (
+          s.userId === req.user.id ||
+          (s.authorEmail && req.user.email && s.authorEmail.toLowerCase() === req.user.email.toLowerCase())
+        )
+      );
       return {
         id: s.id,
         userId: s.userId,
         authorUsername: s.authorUsername,
+        authorEmail: isOwner ? s.authorEmail : undefined,
         title: s.title,
         category: s.category,
         description: s.description,
@@ -95,7 +101,12 @@ router.get('/:id', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
       return res.status(404).json({ error: 'Script não encontrado com o ID especificado.' });
     }
 
-    const isOwner = req.user && req.user.id === script.userId;
+    const isOwner = Boolean(
+      req.user && (
+        script.userId === req.user.id ||
+        (script.authorEmail && req.user.email && script.authorEmail.toLowerCase() === req.user.email.toLowerCase())
+      )
+    );
 
     let isAuthorized = false;
 
@@ -112,6 +123,7 @@ router.get('/:id', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
         id: script.id,
         userId: script.userId,
         authorUsername: script.authorUsername,
+        authorEmail: isOwner ? script.authorEmail : undefined,
         title: script.title,
         category: script.category,
         description: script.description,
@@ -176,11 +188,13 @@ router.post('/', requireAuth, scriptsLimiter, (req: AuthenticatedRequest, res: R
     const scriptId = db.generateUniqueId();
     const userId = req.user.id;
     const authorUsername = req.user.username;
+    const authorEmail = req.user.email;
 
     const newScript: Script = {
       id: scriptId,
       userId,
       authorUsername,
+      authorEmail,
       title: title.trim().slice(0, 100),
       category: typeof category === 'string' ? category.trim() : undefined,
       description: description.trim().slice(0, 500),
@@ -228,8 +242,15 @@ router.put('/:id', requireAuth, scriptsLimiter, (req: AuthenticatedRequest, res:
       return res.status(404).json({ error: 'Script não encontrado.' });
     }
 
-    if (existing.userId !== req.user!.id) {
-      return res.status(403).json({ error: 'Você não tem permissão para editar este script.' });
+    const isOwner = Boolean(
+      req.user && (
+        existing.userId === req.user.id ||
+        (existing.authorEmail && req.user.email && existing.authorEmail.toLowerCase() === req.user.email.toLowerCase())
+      )
+    );
+
+    if (!isOwner) {
+      return res.status(403).json({ error: 'Você não tem permissão para editar este script. Apenas o autor que o cadastrou pode modificá-lo.' });
     }
 
     const updates: Partial<Script> = {};
@@ -312,7 +333,7 @@ router.put('/:id', requireAuth, scriptsLimiter, (req: AuthenticatedRequest, res:
   }
 });
 
-// DELETE /api/scripts/:id - Delete script
+// DELETE /api/scripts/:id - Delete script (Only the user/email who created it can delete)
 router.delete('/:id', requireAuth, (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -322,11 +343,20 @@ router.delete('/:id', requireAuth, (req: AuthenticatedRequest, res: Response) =>
       return res.status(404).json({ error: 'Script não encontrado.' });
     }
 
-    if (existing.userId !== req.user!.id) {
-      return res.status(403).json({ error: 'Você não tem permissão para excluir este script.' });
+    const isOwner = Boolean(
+      req.user && (
+        existing.userId === req.user.id ||
+        (existing.authorEmail && req.user.email && existing.authorEmail.toLowerCase() === req.user.email.toLowerCase())
+      )
+    );
+
+    if (!isOwner) {
+      return res.status(403).json({
+        error: 'Você não tem permissão para apagar este script. Apenas o usuário que publicou o script com a mesma conta/e-mail pode apagá-lo.'
+      });
     }
 
-    db.deleteScript(id, req.user!.id);
+    db.deleteScript(id, { id: req.user!.id, email: req.user!.email });
     return res.json({ message: 'Script excluído com sucesso!' });
   } catch (err) {
     console.error('Error deleting script:', err);

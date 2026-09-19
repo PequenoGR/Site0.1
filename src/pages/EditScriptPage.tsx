@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../components/Toast';
+import { useAppVersion } from '../context/VersionContext';
 import { copyToClipboard } from '../lib/clipboard';
 
 interface EditScriptPageProps {
@@ -32,6 +33,7 @@ const CATEGORIES = [
 
 export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavigate }) => {
   const { showToast } = useToast();
+  const { incrementVersion } = useAppVersion();
 
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
@@ -39,6 +41,8 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [code, setCode] = useState('');
+  const [isOwner, setIsOwner] = useState(true);
+  const [authorName, setAuthorName] = useState('');
 
   // Password modal/state
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -61,6 +65,8 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
         setPhotoPreview(res.script.thumbnailUrl || null);
         setCode(res.script.code || '');
         setHasPassword(Boolean(res.script.isPasswordProtected));
+        setIsOwner(Boolean(res.script.isOwner));
+        setAuthorName(res.script.authorUsername || res.script.authorEmail || 'Outro usuário');
       } catch (err: any) {
         showToast('Erro ao carregar script', err.message, 'error');
         onNavigate('dashboard');
@@ -112,6 +118,7 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    incrementVersion('Download de script');
     showToast('Download iniciado', `${safeName}.lua foi baixado.`);
   };
 
@@ -124,6 +131,7 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
     const success = await copyToClipboard(code);
     if (success) {
       setCopied(true);
+      incrementVersion('Cópia de código');
       showToast('Copiado!', 'Código copiado para a área de transferência.');
       setTimeout(() => setCopied(false), 2000);
     }
@@ -153,6 +161,7 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
         ...(password.trim() ? { password: password.trim() } : {}),
       });
 
+      incrementVersion(`Script atualizado: ${name}`);
       showToast('Script atualizado com sucesso!', `As alterações foram salvas.`);
       onNavigate('dashboard');
     } catch (err: any) {
@@ -168,6 +177,7 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
     }
     try {
       await api.deleteScript(scriptId);
+      incrementVersion('Script excluído');
       showToast('Script excluído!', 'O script foi removido com sucesso.');
       onNavigate('dashboard');
     } catch (err: any) {
@@ -207,16 +217,28 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
             <span>Voltar</span>
           </button>
 
-          <button
-            type="button"
-            id="btn-edit-delete"
-            onClick={handleDelete}
-            className="flex items-center gap-1 text-xs font-bold text-rose-400 hover:text-rose-300 transition-colors"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span>Excluir</span>
-          </button>
+          {isOwner ? (
+            <button
+              type="button"
+              id="btn-edit-delete"
+              onClick={handleDelete}
+              className="flex items-center gap-1 text-xs font-bold text-rose-400 hover:text-rose-300 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Excluir</span>
+            </button>
+          ) : (
+            <span className="text-[11px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
+              Autor: @{authorName}
+            </span>
+          )}
         </div>
+
+        {!isOwner && (
+          <div className="w-full p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs text-center font-semibold">
+            Você está visualizando este script em modo leitura. Apenas o criador ({authorName}) pode alterá-lo ou apagá-lo.
+          </div>
+        )}
 
         {/* 1. Upload Photo Container */}
         <div
@@ -380,10 +402,14 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
             id="btn-save-edit-script"
             type="button"
             onClick={handleSubmit}
-            disabled={submitting}
-            className="w-full py-2.5 sm:py-3 rounded-xl bg-[#2e52b2] hover:bg-[#3760cc] active:scale-[0.98] text-white font-extrabold text-sm sm:text-base tracking-wide transition-all shadow-lg flex items-center justify-center gap-2"
+            disabled={submitting || !isOwner}
+            className={`w-full py-2.5 sm:py-3 rounded-xl font-extrabold text-sm sm:text-base tracking-wide transition-all shadow-lg flex items-center justify-center gap-2 ${
+              isOwner
+                ? 'bg-[#2e52b2] hover:bg-[#3760cc] active:scale-[0.98] text-white'
+                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+            }`}
           >
-            <span>{submitting ? 'Salvando...' : 'Salvar Alterações'}</span>
+            <span>{submitting ? 'Salvando...' : isOwner ? 'Salvar Alterações' : 'Apenas o autor pode salvar alterações'}</span>
           </button>
         </div>
       </div>

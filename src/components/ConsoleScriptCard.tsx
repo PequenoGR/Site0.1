@@ -1,6 +1,7 @@
 import React from 'react';
 import { Eye, Clock } from 'lucide-react';
 import { ScriptItem } from '../types';
+import { useTheme } from '../context/ThemeContext';
 
 interface ConsoleScriptCardProps {
   script: ScriptItem;
@@ -31,16 +32,22 @@ export function formatConsoleTime(isoString?: string): string {
 }
 
 export const ConsoleScriptCard: React.FC<ConsoleScriptCardProps> = ({ script, onClick }) => {
+  const { accentInfo } = useTheme();
   const hasThumbnail = Boolean(script.thumbnailUrl && script.thumbnailUrl.trim().length > 0);
+  const displayName = script.category || script.title || 'Script';
 
   return (
     <div
       id={`console-card-${script.id}`}
       onClick={() => onClick(script)}
-      className="group rounded-2xl overflow-hidden bg-[#1a365d] border border-[#2b4c7e] flex flex-col cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-900/30 active:scale-[0.98] select-none"
+      style={{
+        backgroundColor: accentInfo.cardBgHex,
+        borderColor: accentInfo.cardBorderHex,
+      }}
+      className="group rounded-xl overflow-hidden border-2 flex flex-col cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.98] select-none shadow-lg"
     >
       {/* Top Media / Thumbnail Section */}
-      <div className="w-full aspect-[4/3] sm:aspect-[16/11] bg-black relative flex items-center justify-center overflow-hidden">
+      <div className="w-full aspect-[4/3] bg-black relative flex items-center justify-center overflow-hidden">
         {hasThumbnail ? (
           <img
             src={script.thumbnailUrl}
@@ -58,35 +65,47 @@ export const ConsoleScriptCard: React.FC<ConsoleScriptCardProps> = ({ script, on
           />
         ) : null}
 
-        {/* Fallback "Sem foto" exactly like user screenshot */}
+        {/* Fallback "Sem foto" */}
         <div
           className={`fallback-placeholder w-full h-full bg-black flex flex-col items-center justify-center ${
             hasThumbnail ? 'hidden' : 'flex'
           }`}
         >
-          <span className="text-4xl sm:text-5xl font-black text-white leading-none">?</span>
-          <span className="text-xs sm:text-sm font-black text-white tracking-wide mt-1.5">Sem foto</span>
-        </div>
-
-        {/* Title overlay tooltip on hover */}
-        <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-          <p className="text-[11px] font-bold text-white truncate drop-shadow-sm">{script.title}</p>
+          <span className="text-5xl sm:text-6xl font-black text-white leading-none">?</span>
+          <span className="text-sm sm:text-base font-black text-white tracking-wide mt-1 font-['Nunito',sans-serif]">
+            Sem foto
+          </span>
         </div>
       </div>
 
-      {/* Bottom Darker Blue Stats Bar */}
-      <div className="bg-[#1a365d] px-2.5 sm:px-3 py-2 sm:py-2.5 flex flex-col justify-center gap-1.5 min-h-[64px] sm:min-h-[70px]">
-        {/* Top View Counter Pill */}
-        <div className="bg-black/90 rounded-full px-2.5 py-0.5 flex items-center gap-1.5 text-xs font-black text-white w-fit shadow-xs">
-          <Eye className="w-3.5 h-3.5 text-white stroke-[2.5]" />
-          <span>{script.accessCount || 0}</span>
+      {/* Bottom Color Stats & Title Bar */}
+      <div
+        style={{ backgroundColor: accentInfo.cardBgHex }}
+        className="p-3 sm:p-4 flex flex-col justify-between flex-1 min-h-[90px] sm:min-h-[105px]"
+      >
+        {/* Badges container */}
+        <div className="flex flex-col gap-1.5">
+          {/* Top View Counter Badge */}
+          <div className="bg-black/90 rounded-md px-2.5 py-1 flex items-center gap-1.5 text-xs font-black text-white w-fit shadow-xs">
+            <Eye className="w-3.5 h-3.5 text-white stroke-[2.5]" />
+            <span>{script.accessCount || 0}</span>
+          </div>
+
+          {/* Bottom Time Ago Badge */}
+          <div className="bg-black/90 rounded-md px-2.5 py-1 flex items-center gap-1.5 text-xs font-black text-white w-fit shadow-xs">
+            <Clock className="w-3.5 h-3.5 text-white stroke-[2.5]" />
+            <span>{formatConsoleTime(script.createdAt)}</span>
+          </div>
         </div>
 
-        {/* Bottom Time Ago Pill */}
-        <div className="bg-black/90 rounded-full px-2.5 py-0.5 flex items-center gap-1.5 text-xs font-black text-white w-fit shadow-xs">
-          <Clock className="w-3.5 h-3.5 text-white stroke-[2.5]" />
-          <span>{formatConsoleTime(script.createdAt)}</span>
-        </div>
+        {/* Script / Game Name Display in Large Bold Font */}
+        {displayName && (
+          <div className="mt-2.5">
+            <h3 className="text-xl sm:text-2xl font-black text-white leading-tight font-['Nunito',sans-serif] drop-shadow-sm truncate">
+              {displayName}
+            </h3>
+          </div>
+        )}
       </div>
     </div>
   );
