@@ -209,7 +209,7 @@ export const ScriptDetailModal: React.FC<ScriptDetailModalProps> = ({
               </button>
             </div>
 
-            {script.isOwner ? (
+            {script.isOwner && (
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => {
@@ -232,10 +232,6 @@ export const ScriptDetailModal: React.FC<ScriptDetailModalProps> = ({
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
-            ) : (
-              <span className="text-[11px] text-slate-500">
-                🔒 Somente o criador pode apagar
-              </span>
             )}
           </div>
         </div>

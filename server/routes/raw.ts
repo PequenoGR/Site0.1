@@ -230,60 +230,181 @@ const handleRawScript = (req: Request, res: Response) => {
       const hasError = hasAttemptedAuth;
 
       return res.status(401).send(`<!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Acesso Bloqueado • ScriptsGR Shield</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Senha • ScriptsGR</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #030712; color: #f8fafc; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1.5rem; }
-    .card { background: #0b132b; border: 1px solid #1e293b; border-radius: 1.25rem; max-width: 32rem; width: 100%; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); }
-    .badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.85rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 800; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-    .error-banner { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); color: #fca5a5; padding: 0.75rem 1rem; border-radius: 0.75rem; font-size: 0.8125rem; font-weight: 600; margin-bottom: 1.25rem; }
-    .info { background: #020617; border: 1px solid #1e293b; border-radius: 0.75rem; padding: 1rem; margin: 1.25rem 0; font-size: 0.8125rem; line-height: 1.5; }
-    .input-group { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
-    input { flex: 1; background: #020617; border: 1px solid #334155; color: #fff; padding: 0.75rem 1rem; border-radius: 0.75rem; font-size: 0.875rem; outline: none; }
-    input:focus { border-color: #06b6d4; box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2); }
-    button { background: #06b6d4; color: #030712; border: none; border-radius: 0.75rem; padding: 0.75rem 1.25rem; font-weight: 700; cursor: pointer; transition: background 0.15s; }
-    button:hover { background: #22d3ee; }
-    .btn-back { display: inline-block; margin-top: 1.25rem; font-size: 0.8125rem; color: #94a3b8; text-decoration: none; }
-    .btn-back:hover { color: #f8fafc; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: #000000;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    
+    /* Background decorative dark navy orbs matching the custom design */
+    .orb-left {
+      position: absolute;
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      background-color: #1c2e68;
+      top: 30%;
+      left: 16%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    .orb-right {
+      position: absolute;
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      background-color: #1c2e68;
+      top: 36%;
+      right: 16%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    @media (max-width: 640px) {
+      .orb-left {
+        width: 120px;
+        height: 120px;
+        top: 26%;
+        left: 10%;
+      }
+      .orb-right {
+        width: 120px;
+        height: 120px;
+        top: 32%;
+        right: 10%;
+      }
+    }
+
+    .container {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 360px;
+      padding: 1.5rem;
+      margin-top: 5vh;
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 26px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 14px;
+      letter-spacing: -0.01em;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    }
+
+    .key-emoji {
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .form-box {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .input-bar {
+      width: 100%;
+      max-width: 320px;
+      height: 52px;
+      background-color: #4f70f4;
+      border: none;
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 600;
+      text-align: center;
+      outline: none;
+      box-shadow: 0 4px 20px rgba(79, 112, 244, 0.35);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .input-bar::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .input-bar:focus {
+      transform: scale(1.02);
+      box-shadow: 0 6px 24px rgba(79, 112, 244, 0.55);
+    }
+
+    .error-msg {
+      margin-top: 14px;
+      color: #ef4444;
+      font-size: 13px;
+      font-weight: 700;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 6px 14px;
+      border-radius: 8px;
+      animation: shake 0.3s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-      <h2 style="margin:0; font-size:1.25rem; font-weight:800;">ScriptsGR Shield</h2>
-      <span class="badge">🔒 Bloqueado</span>
+  <!-- Floating Navy Orbs -->
+  <div class="orb-left"></div>
+  <div class="orb-right"></div>
+
+  <!-- Main Center Form -->
+  <div class="container">
+    <div class="title">
+      <span class="key-emoji">🔑</span>
+      <span>Senha</span>
     </div>
 
-    ${hasError ? `<div class="error-banner">❌ Senha ou chave incorreta! Acesso negado ao script. Tente novamente.</div>` : ''}
-
-    <h1 style="font-size:1.5rem; font-weight:800; margin-bottom:0.5rem;">Acesso Bloqueado</h1>
-    <p style="color:#94a3b8; font-size:0.875rem; line-height:1.5;">Este script Luau é <strong>protegido por senha/chave</strong> contra vazamento. Digite a senha definida pelo autor para liberar o código.</p>
-
-    <div class="info">
-      <div><strong>Script:</strong> <span style="color:#f8fafc;">${script.title}</span></div>
-      <div><strong>ID:</strong> <span style="color:#38bdf8; font-family:monospace;">${script.id}</span></div>
-      <div><strong>Proteção:</strong> <span style="color:#f87171;">Senha / Chave Requerida</span></div>
-    </div>
-
-    <form method="GET" action="/raw/${script.id}">
-      <label style="font-size: 0.8125rem; color: #cbd5e1; font-weight: 600; display:block; margin-bottom:0.25rem;">
-        Senha ou Chave de Acesso:
-      </label>
-      <div class="input-group">
-        <input type="password" name="pass" placeholder="Digite a senha..." required autofocus autocomplete="off" />
-        <button type="submit">Desbloquear</button>
-      </div>
+    <form method="GET" action="/raw/${script.id}" class="form-box">
+      <input
+        type="password"
+        name="pass"
+        class="input-bar"
+        placeholder=""
+        autofocus
+        required
+        autocomplete="off"
+      />
     </form>
 
-    <div style="margin-top:1rem; font-size:0.75rem; color:#64748b;">
-      💡 Para usar no Roblox: <code style="color:#fbbf24; font-family:monospace;">loadstring(game:HttpGet("${fullUrl}?pass=SUA_SENHA"))()</code>
-    </div>
-
-    <a href="/#/dashboard" class="btn-back">&larr; Voltar para o Painel</a>
+    ${hasError ? `<div class="error-msg">❌ Senha incorreta</div>` : ''}
   </div>
 </body>
 </html>`);
