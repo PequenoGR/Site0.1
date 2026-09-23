@@ -28,7 +28,7 @@ export const DocsPage: React.FC = () => {
 
   const protectedExample = `loadstring(game:HttpGet("${origin}/raw/admin-hub-vip?key=key_demo_vip_access_2026"))()`;
 
-  const robustProtectedExample = `-- Exemplo Robusto com Tratamento de Erros no Luau - ScriptsGR
+  const robustProtectedExample = `-- Exemplo Robusto com Tratamento de Erros - ScriptsGR
 local scriptUrl = "${origin}/raw/admin-hub-vip?key=key_demo_vip_access_2026"
 
 local success, result = pcall(function()
@@ -64,11 +64,11 @@ end`;
         <div className="flex items-center gap-2 mb-1">
           <BookOpen className="w-6 h-6 text-cyan-400" />
           <h1 className="text-xl font-black text-slate-100 tracking-tight">
-            Guia de Uso: Luau & Loadstring RAW
+            Guia de Uso: Scripts &amp; Loadstring RAW
           </h1>
         </div>
         <p className="text-xs text-slate-400">
-          Aprenda a executar seus scripts Luau hospedados no Roblox Studio e executores através de links RAW diretos.
+          Aprenda a executar seus scripts hospedados através de links RAW diretos.
         </p>
       </div>
 
@@ -80,15 +80,15 @@ end`;
       >
         <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
           <Globe className="w-5 h-5" />
-          <span>1. Como Executar um Script Público (🔓)</span>
+          <span>1. Como Executar um Script Público</span>
         </div>
         <p className="text-xs text-slate-300 leading-relaxed">
-          Scripts públicos não possuem restrição de acesso. Qualquer cliente HTTP pode requisitar a URL e receber imediatamente o código Luau em formato <code className="font-mono text-cyan-400">text/plain</code>.
+          Scripts públicos não possuem restrição de acesso. Qualquer cliente HTTP pode requisitar a URL e receber imediatamente o código em formato <code className="font-mono text-cyan-400">text/plain</code>.
         </p>
 
         <div className="relative p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs">
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/80 text-[11px] text-slate-500">
-            <span>Comando no Roblox / Executor Luau</span>
+            <span>Comando para Execução</span>
             <button
               onClick={() => copyCode(publicExample, setCopiedPublic)}
               className="flex items-center gap-1 text-cyan-400 hover:text-cyan-300 transition-colors"
@@ -109,7 +109,7 @@ end`;
       >
         <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
           <Lock className="w-5 h-5" />
-          <span>2. Como Executar um Script Protegido por Senha / Chave (🔒)</span>
+          <span>2. Como Executar um Script Protegido por Senha / Chave</span>
         </div>
         <p className="text-xs text-slate-300 leading-relaxed">
           Como a função <code className="font-mono text-amber-300">game:HttpGet</code> é uma requisição de máquina pura (sem formulários visuais do browser), o ScriptsGR adota a autenticação via <strong>Token de Acesso seguro</strong> na query string <code className="font-mono text-amber-300">?key=SUA_CHAVE</code>.
@@ -138,15 +138,15 @@ end`;
       >
         <div className="flex items-center gap-2 text-cyan-400 font-bold text-sm">
           <Terminal className="w-5 h-5" />
-          <span>3. Execução Robusta em Luau (com Proteção pcall)</span>
+          <span>3. Execução Robusta (com Proteção pcall)</span>
         </div>
         <p className="text-xs text-slate-300 leading-relaxed">
-          Se o script estiver protegido e alguém tentar rodar sem a chave, o ScriptsGR retorna um erro amigável em Luau puro (não quebra o parser com HTML). Veja este código recomendado para produções:
+          Se o script estiver protegido e alguém tentar rodar sem a chave, o ScriptsGR retorna uma mensagem em texto puro (não quebra o parser com HTML). Veja este código recomendado para produções:
         </p>
 
         <div className="relative p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs">
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/80 text-[11px] text-slate-500">
-            <span>Luau Script Wrapper</span>
+            <span>Script Wrapper</span>
             <button
               onClick={() => copyCode(robustProtectedExample, setCopiedRobloxProtected)}
               className="flex items-center gap-1 text-cyan-400 hover:text-cyan-300 transition-colors"
@@ -178,7 +178,7 @@ end`;
           </div>
           <div>
             <strong className="text-slate-200 block">Existe limite de tamanho para o script?</strong>
-            Sim, o endpoint aceita scripts de até 1MB por padrão, o suficiente para milhares de linhas de código Luau.
+            Sim, o endpoint aceita scripts de até 1MB por padrão, o suficiente para milhares de linhas de código.
           </div>
           <div>
             <strong className="text-slate-200 block">O endpoint tem proteção contra ataques?</strong>

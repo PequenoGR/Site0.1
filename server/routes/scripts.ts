@@ -187,11 +187,11 @@ router.post('/', requireAuth, scriptsLimiter, (req: AuthenticatedRequest, res: R
     }
 
     if (!code || typeof code !== 'string' || code.trim().length === 0) {
-      return res.status(400).json({ error: 'O código Luau não pode estar vazio.' });
+      return res.status(400).json({ error: 'O código não pode estar vazio.' });
     }
 
     if (code.length > 1024 * 1024) {
-      return res.status(400).json({ error: 'O código Luau excede o limite máximo permitido de 1MB.' });
+      return res.status(400).json({ error: 'O código excede o limite máximo permitido de 1MB.' });
     }
 
     let passwordHash: string | undefined = undefined;
@@ -239,7 +239,7 @@ router.post('/', requireAuth, scriptsLimiter, (req: AuthenticatedRequest, res: R
     db.addScript(newScript);
 
     return res.status(201).json({
-      message: 'Script Luau criado com sucesso!',
+      message: 'Script criado com sucesso!',
       script: {
         id: newScript.id,
         title: newScript.title,
@@ -303,10 +303,10 @@ router.put('/:id', requireAuth, scriptsLimiter, (req: AuthenticatedRequest, res:
 
     if (code !== undefined) {
       if (typeof code !== 'string' || code.trim().length === 0) {
-        return res.status(400).json({ error: 'O código Luau não pode estar vazio.' });
+        return res.status(400).json({ error: 'O código não pode estar vazio.' });
       }
       if (code.length > 1024 * 1024) {
-        return res.status(400).json({ error: 'O código Luau excede o limite máximo permitido de 1MB.' });
+        return res.status(400).json({ error: 'O código excede o limite máximo permitido de 1MB.' });
       }
       updates.code = code;
     }

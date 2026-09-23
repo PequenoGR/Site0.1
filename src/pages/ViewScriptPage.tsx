@@ -12,7 +12,6 @@ import {
   Terminal,
   ExternalLink,
   ShieldCheck,
-  Sparkles,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../components/Toast';
@@ -36,6 +35,7 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [unlockModalOpen, setUnlockModalOpen] = useState(false);
+  const [copiedRawLink, setCopiedRawLink] = useState(false);
 
   useEffect(() => {
     async function loadScript() {
@@ -123,7 +123,6 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
   const activeKey = script.accessKeys && script.accessKeys.length > 0 ? script.accessKeys[0].key : undefined;
   const rawUrl = getRawUrl(script, activeKey, true);
   const loadstringSnippet = getLoadstring(rawUrl);
-  const [copiedRawLink, setCopiedRawLink] = useState(false);
 
   return (
     <div className="w-full min-h-[calc(100vh-65px)] bg-black text-white flex flex-col items-center justify-center p-4 sm:p-6 pb-16 select-none">
@@ -284,7 +283,7 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5 text-cyan-400 font-bold">
               <Terminal className="w-3.5 h-3.5" />
-              <span>Link RAW (.lua)</span>
+              <span>Link RAW</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-0.5">

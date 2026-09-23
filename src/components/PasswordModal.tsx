@@ -44,7 +44,7 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
 
     try {
       const res = await api.unlockScript(scriptId, password);
-      showToast('Desbloqueado com sucesso!', 'Código Luau liberado.');
+      showToast('Desbloqueado com sucesso!', 'Código liberado com sucesso.');
       if (res.accessKey) {
         setUnlockedKey(res.accessKey);
       }
@@ -197,7 +197,7 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 mb-1">
-                    Loadstring Pronto para Luau/Roblox
+                    Loadstring para Execução
                   </label>
                   <div className="flex items-center gap-2">
                     <input

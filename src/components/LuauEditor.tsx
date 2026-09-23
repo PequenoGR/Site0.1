@@ -64,7 +64,7 @@ export const LuauEditor: React.FC<LuauEditorProps> = ({
     const success = await copyToClipboard(value);
     if (success) {
       setCopied(true);
-      showToast('Código copiado!', 'O código Luau foi copiado para a área de transferência.');
+      showToast('Código copiado!', 'O código foi copiado para a área de transferência.');
       setTimeout(() => setCopied(false), 2000);
     } else {
       showToast('Erro ao copiar', 'Não foi possível acessar a área de transferência.', 'error');
@@ -103,7 +103,7 @@ export const LuauEditor: React.FC<LuauEditorProps> = ({
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700/40 text-slate-300 font-mono text-[11px]">
             <Code2 className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Luau / Lua</span>
+            <span>Lua</span>
           </div>
           <span className="hidden sm:inline-block text-slate-500">•</span>
           <span className="hidden sm:inline-block font-mono text-[11px]">
@@ -198,7 +198,7 @@ export const LuauEditor: React.FC<LuauEditorProps> = ({
           loading={
             <div className="flex flex-col items-center justify-center h-full p-8 text-slate-400">
               <div className="w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-2" />
-              <p className="text-xs">Carregando Editor Luau...</p>
+              <p className="text-xs">Carregando Editor...</p>
             </div>
           }
           options={{
@@ -230,7 +230,7 @@ export const LuauEditor: React.FC<LuauEditorProps> = ({
             : 'bg-slate-100 border-slate-200 text-slate-500'
         }`}
       >
-        <span>UTF-8 • Luau Mode</span>
+        <span>UTF-8 • Lua Mode</span>
         <span>Atalho: Salve com Ctrl + S</span>
       </div>
     </div>

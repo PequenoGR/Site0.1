@@ -15,7 +15,6 @@ import {
   Globe,
   Plus,
   Trash2,
-  Sparkles,
 } from 'lucide-react';
 import { ScriptItem } from '../types';
 import { api } from '../lib/api';
@@ -164,7 +163,7 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
       incrementVersion('Teste RAW executado');
       showToast(
         res.status === 200 ? 'Teste 200 OK' : `Teste Status ${res.status}`,
-        res.status === 200 ? 'Código Luau recebido com sucesso!' : 'Acesso negado conforme esperado.'
+        res.status === 200 ? 'Código recebido com sucesso!' : 'Acesso negado conforme esperado.'
       );
     } catch (err: any) {
       showToast('Erro ao testar RAW', err.message, 'error');
@@ -180,11 +179,11 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
         <div className="flex items-center gap-2 mb-1">
           <Link2 className="w-6 h-6 text-cyan-400" />
           <h1 className="text-xl font-black text-slate-100 tracking-tight">
-            Gerenciamento do Link RAW & Loadstrings
+            Gerenciamento do Link RAW &amp; Loadstrings
           </h1>
         </div>
         <p className="text-xs text-slate-400">
-          Entenda a arquitetura de requisições HTTP, configure parâmetros de autenticação e teste endpoints em tempo real.
+          Configure parâmetros de autenticação e teste endpoints em tempo real.
         </p>
       </div>
 
@@ -195,9 +194,9 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
           <span>Como funciona o Loadstring com Proteção de Senha?</span>
         </div>
         <p>
-          Quando um script Luau é executado no Roblox via <code className="text-amber-300 font-mono">loadstring(game:HttpGet(&quot;url&quot;))()</code>, 
-          o cliente HTTP realiza um <strong>GET simples</strong> esperando <strong>código Luau puro</strong>. 
-          Ele <strong>não possui navegador web</strong> para exibir formulários de senha em HTML. Se um site retornar HTML, o executor falha com erro de sintaxe.
+          Quando um script é executado via <code className="text-amber-300 font-mono">loadstring(game:HttpGet(&quot;url&quot;))()</code>, 
+          o cliente HTTP realiza um <strong>GET simples</strong> esperando <strong>código puro</strong>. 
+          Ele <strong>não possui navegador web</strong> para exibir formulários de senha em HTML.
         </p>
         <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 font-mono text-[11px] text-cyan-300">
           -- Formato Seguro Autenticado suportado pelo ScriptsGR:
@@ -232,7 +231,7 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
         >
           {scripts.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.title} ({s.id}) — {s.isPasswordProtected ? '🔒 Protegido' : '🔓 Público'}
+              {s.title} ({s.id}) — {s.isPasswordProtected ? 'Protegido' : 'Público'}
             </option>
           ))}
         </select>
@@ -314,8 +313,7 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-cyan-200" />
-                    <span>Formatado (.lua)</span>
+                    <span>Link Completo</span>
                   </button>
                   <button
                     type="button"
@@ -326,7 +324,7 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
-                    Link Curto (ID)
+                    Link Curto
                   </button>
                 </div>
 
@@ -348,7 +346,7 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
               {/* Loadstring Output */}
               <div className="space-y-1.5 pt-2">
                 <label className="block text-xs font-bold text-slate-400">
-                  Comando Loadstring Luau para Execução:
+                  Comando Loadstring para Execução:
                 </label>
                 <div className="flex items-center gap-2">
                   <div

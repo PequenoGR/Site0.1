@@ -124,7 +124,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   {scripts.length}
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">Scripts Luau criados e publicados por você</p>
+              <p className="text-xs text-slate-400">Scripts criados e publicados por você</p>
             </div>
           </div>
 

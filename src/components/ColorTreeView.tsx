@@ -59,7 +59,7 @@ export const ColorTreeView: React.FC<ColorTreeViewProps> = ({
   ];
 
   const cyberColors: TreeChildColor[] = [
-    { id: 'cyan', name: 'Ciano Neon', hex: '#06b6d4', bgClass: 'bg-cyan-500', desc: 'Estilo clássico terminal Luau' },
+    { id: 'cyan', name: 'Ciano Neon', hex: '#06b6d4', bgClass: 'bg-cyan-500', desc: 'Estilo clássico de terminal' },
     { id: 'blue', name: 'Azul Royal', hex: '#2563eb', bgClass: 'bg-blue-600', desc: 'Equilíbrio e clareza visual' },
     { id: 'indigo', name: 'Índigo Galáxia', hex: '#6366f1', bgClass: 'bg-indigo-600', desc: 'Azul profundo cósmico' },
     { id: 'violet', name: 'Violeta Cyber', hex: '#8b5cf6', bgClass: 'bg-violet-500', desc: 'Roxo futurista de alto contraste' },

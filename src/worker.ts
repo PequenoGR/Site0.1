@@ -154,7 +154,7 @@ print("[ScriptsGR] Roube um Brainrot Script carregado!")`,
     id: 'w33umz',
     userId: 'user_demo_001',
     authorUsername: 'demo',
-    title: 'GR Hub Luau',
+    title: 'GR Hub',
     category: 'Universal',
     description: 'Script utilitário GR Hub com interface e módulos automáticos.',
     code: `local INTERFACE_URL = "https://raw.githubusercontent.com/PequenoGR/Gr_Script/refs/heads/main/InterfaceScript"
@@ -206,9 +206,9 @@ return Hub
     id: 'wgj62t',
     userId: 'user_demo_001',
     authorUsername: 'demo',
-    title: 'GR Hub Luau Main',
+    title: 'GR Hub Main',
     category: 'Universal',
-    description: 'Script utilitário principal GR Hub para execução direta via Roblox loadstring.',
+    description: 'Script utilitário principal GR Hub para execução direta via loadstring.',
     code: `local INTERFACE_URL = "https://raw.githubusercontent.com/PequenoGR/Gr_Script/refs/heads/main/InterfaceScript"
 
 local ok, err = pcall(function()
@@ -258,9 +258,9 @@ return Hub
     id: 'd44evg',
     userId: 'user_demo_001',
     authorUsername: 'demo',
-    title: 'GR Hub Luau Loader (d44evg)',
+    title: 'GR Hub Loader (d44evg)',
     category: 'Universal',
-    description: 'Script utilitário GR Hub para execução direta via Roblox loadstring.',
+    description: 'Script utilitário GR Hub para execução direta via loadstring.',
     code: `local INTERFACE_URL = "https://raw.githubusercontent.com/PequenoGR/Gr_Script/refs/heads/main/InterfaceScript"
 
 local ok, err = pcall(function()
@@ -361,11 +361,11 @@ print("[GR Hub] Carregado!")
     id: 'fly-speed-v2',
     userId: 'user_demo_001',
     authorUsername: 'demo',
-    title: 'Luau Speed & Fly Utility',
+    title: 'Speed & Fly Utility',
     category: 'Universal',
-    description: 'Script utilitário em Luau com controle suave de movimentação, teleporte e notificações no console.',
+    description: 'Script utilitário com controle suave de movimentação, teleporte e notificações no console.',
     code: `--[[
-    Luau Utility Script v2.4
+    Utility Script v2.4
     Hospedado via ScriptsGR
     Exemplo compatível com loadstring(game:HttpGet(...))()
 ]]
@@ -732,8 +732,8 @@ function renderShieldHtml(scriptId: string, scriptTitle: string, author: string,
     <h1>${isUnlocked ? 'Acesso Concedido' : 'Acesso Bloqueado'}</h1>
     <p>
       ${isUnlocked 
-        ? 'O script foi autenticado com sucesso. Você pode utilizá-lo via loadstring no executor do Roblox.' 
-        : 'Este script Luau possui proteção anti-vazamento de código-fonte. Não é possível visualizar ou inspecionar o código diretamente no navegador sem uma chave autorizada.'}
+        ? 'O script foi autenticado com sucesso. Você pode utilizá-lo via loadstring.' 
+        : 'Este script possui proteção anti-vazamento de código-fonte. Não é possível visualizar ou inspecionar o código diretamente no navegador sem uma chave autorizada.'}
     </p>
 
     <div class="script-info">
@@ -1158,7 +1158,7 @@ async function handleWorkerRequest(request: Request, env: Env): Promise<Response
           return jsonResponse({ error: 'O título do script é obrigatório.' }, 400);
         }
         if (!code || typeof code !== 'string' || !code.trim()) {
-          return jsonResponse({ error: 'O código Luau não pode estar vazio.' }, 400);
+          return jsonResponse({ error: 'O código não pode estar vazio.' }, 400);
         }
 
         let passwordHash: string | undefined = undefined;

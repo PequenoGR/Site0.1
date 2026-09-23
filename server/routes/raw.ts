@@ -35,7 +35,7 @@ function renderRawHtmlViewer(script: any, fullRawUrl: string, loadstringSnippet:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(script.title)} • ScriptsGR RAW</title>
+  <title>${escapeHtml(script.title)} - ScriptsGR RAW</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -200,20 +200,20 @@ function renderRawHtmlViewer(script: any, fullRawUrl: string, loadstringSnippet:
         <span class="brand-blue">Scripts</span><span class="brand-white">GR</span>
       </a>
       <span class="script-title">${escapeHtml(script.title)}</span>
-      <span class="badge badge-lua">Luau .lua</span>
+      <span class="badge badge-lua">.lua</span>
       <span class="badge badge-secure">HTTPS SSL</span>
       ${script.authorUsername ? `<span class="badge badge-author">@${escapeHtml(script.authorUsername)}</span>` : ''}
     </div>
 
     <div class="actions">
-      <button class="btn btn-primary" onclick="copyText('${escapeHtml(loadstringSnippet)}', 'Script Luau copiado!')">
-        ⚡ Copiar Script
+      <button class="btn btn-primary" onclick="copyText('${escapeHtml(loadstringSnippet)}', 'Script copiado!')">
+        Copiar Script
       </button>
       <button class="btn btn-secondary" onclick="copyText('${escapeHtml(fullRawUrl)}', 'Link RAW copiado!')">
-        🔗 Copiar Link RAW
+        Copiar Link RAW
       </button>
       <a href="?raw=1" class="btn btn-secondary">
-        📄 Texto Puro (Raw)
+        Texto Puro (Raw)
       </a>
     </div>
   </header>
@@ -373,7 +373,7 @@ const handleRawScript = (req: Request, res: Response) => {
 </head>
 <body>
   <div class="box">
-    <h2>🛡️ Bloqueio Temporário</h2>
+    <h2>Bloqueio Temporário</h2>
     <p>Muitas tentativas incorretas de senha para este script. Por segurança contra ataques de força bruta, tente novamente em 5 minutos.</p>
   </div>
 </body>
@@ -615,7 +615,6 @@ const handleRawScript = (req: Request, res: Response) => {
   <!-- Main Center Form -->
   <div class="container">
     <div class="title">
-      <span class="key-emoji">🔑</span>
       <span>Senha</span>
     </div>
 
@@ -631,7 +630,7 @@ const handleRawScript = (req: Request, res: Response) => {
       />
     </form>
 
-    ${hasError ? `<div class="error-msg">❌ Senha incorreta</div>` : ''}
+    ${hasError ? `<div class="error-msg">Senha incorreta</div>` : ''}
   </div>
 </body>
 </html>`);

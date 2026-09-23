@@ -57,7 +57,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           </div>
           <h1 className="text-xl font-bold tracking-tight text-slate-100">Acesse sua Conta</h1>
           <p className="text-xs text-slate-400">
-            Gerencie seus scripts Luau e links RAW diretos para loadstring
+            Gerencie seus scripts e links RAW diretos para loadstring
           </p>
         </div>
 

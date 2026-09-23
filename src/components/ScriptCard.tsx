@@ -69,7 +69,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = ({
     const success = await copyToClipboard(loadstringCode);
     if (success) {
       setCopiedLoadstring(true);
-      showToast('Script Copiado!', 'Código pronto para ser executado no Luau.');
+      showToast('Script Copiado!', 'Código pronto para ser executado.');
       setTimeout(() => setCopiedLoadstring(false), 2000);
     } else {
       showToast('Erro ao copiar', 'Não foi possível copiar o comando.', 'error');
@@ -182,7 +182,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = ({
         <button
           id={`btn-copy-loadstring-${script.id}`}
           onClick={copyLoadstring}
-          title="Copiar Script Luau completo"
+          title="Copiar Script completo"
           className={`px-2.5 py-1 rounded text-[11px] font-semibold flex items-center gap-1 transition-all ${
             copiedLoadstring
               ? 'bg-emerald-500 text-slate-950'

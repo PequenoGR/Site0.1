@@ -62,7 +62,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
           </div>
           <h1 className="text-xl font-bold tracking-tight text-slate-100">Criar Nova Conta</h1>
           <p className="text-xs text-slate-400">
-            Hospede scripts Luau com links RAW seguros e proteção por chave
+            Hospede seus scripts com links RAW seguros e proteção por chave
           </p>
         </div>
 
@@ -78,7 +78,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="ex: luau_dev"
+                placeholder="ex: user_dev"
                 required
                 className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-sm border focus:outline-none transition-all ${
                   mode === 'dark'
