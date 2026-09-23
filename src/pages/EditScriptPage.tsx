@@ -1,35 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Code2,
   KeyRound,
+  ChevronDown,
   ChevronUp,
   Check,
   X,
-  Upload,
   ArrowLeft,
   Trash2,
+  Gamepad2,
+  Sparkles,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../components/Toast';
 import { useAppVersion } from '../context/VersionContext';
 import { copyToClipboard } from '../lib/clipboard';
+import { RobloxGameSelectorModal } from '../components/RobloxGameSelectorModal';
+import { CATEGORIES_LIST } from '../lib/robloxGames';
 
 interface EditScriptPageProps {
   scriptId: string;
   onNavigate: (tab: string, scriptId?: string) => void;
 }
-
-const CATEGORIES = [
-  'Geral',
-  'Blox Fruits',
-  'Universal',
-  'Arsenal',
-  'Pet Simulator 99',
-  'Da Hood',
-  'Blade Ball',
-  'BedWars',
-  'Outros',
-];
 
 export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavigate }) => {
   const { showToast } = useToast();
@@ -37,9 +29,11 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
 
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('Geral');
+  const [category, setCategory] = useState('Universal');
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [selectedGameName, setSelectedGameName] = useState<string>('');
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isGameSelectorOpen, setIsGameSelectorOpen] = useState(false);
   const [code, setCode] = useState('');
   const [isOwner, setIsOwner] = useState(true);
   const [authorName, setAuthorName] = useState('');
@@ -53,15 +47,13 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
   const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     async function loadScript() {
       setLoading(true);
       try {
         const res = await api.getScriptById(scriptId);
         setName(res.script.title || '');
-        setCategory(res.script.category || 'Geral');
+        setCategory(res.script.category || 'Universal');
         setPhotoPreview(res.script.thumbnailUrl || null);
         setCode(res.script.code || '');
         setHasPassword(Boolean(res.script.isPasswordProtected));
@@ -84,27 +76,18 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
     }
   }, [scriptId]);
 
-  // Photo Upload Handler (file or drag)
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      showToast('Formato Inválido', 'Por favor envie um arquivo de imagem (PNG, JPG, WEBP).', 'error');
-      return;
+  // When user selects a game from Roblox catalog
+  const handleGameSelected = (game: {
+    name: string;
+    category: string;
+    thumbnailUrl: string;
+    placeId?: string;
+  }) => {
+    setSelectedGameName(game.name);
+    setPhotoPreview(game.thumbnailUrl);
+    if (game.category) {
+      setCategory(game.category);
     }
-
-    const reader = new FileReader();
-    reader.onload = (uploadEvent) => {
-      const result = uploadEvent.target?.result as string;
-      setPhotoPreview(result);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // Trigger file selection
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
   };
 
   // Download Code as .lua file
@@ -159,7 +142,7 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
       await api.updateScript(scriptId, {
         title: name.trim(),
         category: category,
-        description: '',
+        description: selectedGameName ? `Jogo: ${selectedGameName}` : '',
         thumbnailUrl: photoPreview || '',
         code: code,
         isPasswordProtected: hasPassword,
@@ -200,13 +183,13 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
 
   return (
     <div className="w-full min-h-[calc(100vh-65px)] bg-black text-white flex flex-col items-center justify-center p-4 sm:p-6 pb-16 select-none">
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        className="hidden"
+      {/* Roblox Game Selector Modal */}
+      <RobloxGameSelectorModal
+        isOpen={isGameSelectorOpen}
+        onClose={() => setIsGameSelectorOpen(false)}
+        onSelectGame={handleGameSelected}
+        currentThumbnailUrl={photoPreview}
+        currentGameName={selectedGameName || name}
       />
 
       <div className="w-full max-w-[340px] sm:max-w-[380px] flex flex-col items-center gap-4">
@@ -245,28 +228,44 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
           </div>
         )}
 
-        {/* 1. Upload Photo Container */}
+        {/* 1. Official Roblox Game Photo Selector Box */}
         <div
-          id="btn-edit-upload-photo"
-          onClick={handleUploadClick}
-          className="w-full aspect-[4/3] rounded-2xl bg-gradient-to-r from-[#29687a] via-[#1a4b6e] to-[#123668] border border-[#2b5d84] flex flex-col items-center justify-center cursor-pointer relative overflow-hidden transition-all duration-200 hover:brightness-110 active:scale-[0.99] shadow-xl group"
+          id="btn-edit-choose-roblox-game"
+          onClick={() => isOwner && setIsGameSelectorOpen(true)}
+          className={`w-full aspect-[4/3] rounded-2xl bg-[#14234b] border border-[#2b5d84] flex flex-col items-center justify-center relative overflow-hidden transition-all duration-200 shadow-xl group ${
+            isOwner ? 'cursor-pointer hover:brightness-110 active:scale-[0.99]' : 'cursor-default'
+          }`}
         >
           {photoPreview ? (
             <>
               <img
                 src={photoPreview}
-                alt="Upload Preview"
+                alt="Game Preview"
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <Upload className="w-5 h-5 text-white" />
-                <span className="text-xs font-bold text-white">Alterar Foto</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-between p-3">
+                <div className="self-end px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-xs border border-white/20 text-[10px] font-bold text-emerald-300 flex items-center gap-1 shadow-sm">
+                  <Sparkles className="w-3 h-3 text-emerald-400" />
+                  <span>Foto Oficial Roblox</span>
+                </div>
+                
+                {isOwner && (
+                  <div className="space-y-0.5">
+                    <p className="text-[11px] font-medium text-blue-300 flex items-center gap-1">
+                      <Gamepad2 className="w-3.5 h-3.5" />
+                      <span>Clique para trocar de jogo ou buscar por ID</span>
+                    </p>
+                  </div>
+                )}
               </div>
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl sm:text-3xl font-extrabold text-[#b8dff0] tracking-wide drop-shadow-md">
-                Upload Photo
+            <div className="flex flex-col items-center justify-center gap-2 p-4 text-center">
+              <div className="w-12 h-12 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400">
+                <Gamepad2 className="w-6 h-6" />
+              </div>
+              <span className="text-base sm:text-lg font-extrabold text-[#b8dff0] tracking-wide drop-shadow-md">
+                Escolher Jogo do Roblox
               </span>
             </div>
           )}
@@ -282,9 +281,10 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
               id="input-edit-script-name"
               type="text"
               value={name}
+              disabled={!isOwner}
               onChange={(e) => setName(e.target.value)}
               placeholder=""
-              className="w-full bg-transparent text-sm sm:text-base font-semibold text-white placeholder-slate-500 focus:outline-none"
+              className="w-full bg-transparent text-sm sm:text-base font-semibold text-white placeholder-slate-500 focus:outline-none disabled:opacity-60"
             />
           </div>
         </div>
@@ -296,25 +296,27 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
           </label>
           <div
             id="dropdown-edit-category-select"
-            onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-            className="w-full bg-[#1e2f5b] border border-[#2e4785] rounded-xl px-3.5 py-2 sm:py-2.5 flex items-center justify-between cursor-pointer transition-all hover:bg-[#25396e] active:scale-[0.99]"
+            onClick={() => isOwner && setIsCategoryOpen(!isCategoryOpen)}
+            className={`w-full bg-[#1e2f5b] border border-[#2e4785] rounded-xl px-3.5 py-2 sm:py-2.5 flex items-center justify-between transition-all ${
+              isOwner ? 'cursor-pointer hover:bg-[#25396e] active:scale-[0.99]' : 'opacity-70 cursor-default'
+            }`}
           >
-            <span className="text-xs sm:text-sm font-semibold text-white">
+            <span className="text-xs sm:text-sm font-semibold text-white truncate pr-2">
               {category}
             </span>
-            <span className="text-white text-xs font-bold">
+            <span className="text-white text-xs font-bold shrink-0">
               {isCategoryOpen ? (
                 <ChevronUp className="w-4 h-4 stroke-[3]" />
               ) : (
-                <span className="font-mono text-sm leading-none">^</span>
+                <ChevronDown className="w-4 h-4 stroke-[3]" />
               )}
             </span>
           </div>
 
           {/* Categoria dropdown list */}
-          {isCategoryOpen && (
-            <div className="absolute top-full mt-1.5 z-40 w-full bg-[#172346] border border-[#2e4785] rounded-xl overflow-hidden shadow-2xl py-1">
-              {CATEGORIES.map((cat) => (
+          {isCategoryOpen && isOwner && (
+            <div className="absolute top-full mt-1.5 z-40 w-full bg-[#172346] border border-[#2e4785] rounded-xl overflow-hidden shadow-2xl py-1 max-h-60 overflow-y-auto">
+              {CATEGORIES_LIST.map((cat) => (
                 <button
                   key={cat}
                   type="button"
@@ -328,8 +330,8 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
                       : 'text-slate-300 hover:bg-[#1e2f5b] hover:text-white'
                   }`}
                 >
-                  <span>{cat}</span>
-                  {category === cat && <Check className="w-3.5 h-3.5 text-blue-300" />}
+                  <span className="truncate">{cat}</span>
+                  {category === cat && <Check className="w-3.5 h-3.5 text-blue-300 shrink-0 ml-2" />}
                 </button>
               ))}
             </div>
@@ -351,19 +353,21 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
           {/* Right actions: Senha pill & Download / Copiar pill buttons */}
           <div className="flex items-center gap-1.5">
             {/* Senha button */}
-            <button
-              id="btn-edit-script-password"
-              type="button"
-              onClick={() => setIsPasswordModalOpen(true)}
-              className={`px-2.5 py-1 rounded-md text-[11px] sm:text-xs font-bold flex items-center gap-1 transition-all ${
-                hasPassword
-                  ? 'bg-amber-600 text-white'
-                  : 'bg-[#1e2f5b] hover:bg-[#25396e] text-[#b8c6dc] border border-[#2e4785]'
-              }`}
-            >
-              <KeyRound className="w-3 h-3 text-amber-400 stroke-[2.5]" />
-              <span>Senha</span>
-            </button>
+            {isOwner && (
+              <button
+                id="btn-edit-script-password"
+                type="button"
+                onClick={() => setIsPasswordModalOpen(true)}
+                className={`px-2.5 py-1 rounded-md text-[11px] sm:text-xs font-bold flex items-center gap-1 transition-all ${
+                  hasPassword
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-[#1e2f5b] hover:bg-[#25396e] text-[#b8c6dc] border border-[#2e4785]'
+                }`}
+              >
+                <KeyRound className="w-3 h-3 text-amber-400 stroke-[2.5]" />
+                <span>Senha</span>
+              </button>
+            )}
 
             {/* Download & Copiar group */}
             <div className="flex items-center bg-[#4665c2] rounded-md overflow-hidden text-[11px] sm:text-xs font-bold text-white shadow-xs">
@@ -394,29 +398,29 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
             id="textarea-edit-script-code"
             rows={7}
             value={code}
+            disabled={!isOwner}
             onChange={(e) => setCode(e.target.value)}
             placeholder=""
             spellCheck={false}
-            className="w-full bg-transparent text-xs sm:text-sm font-mono text-white placeholder-slate-500 focus:outline-none resize-none leading-relaxed"
+            className="w-full bg-transparent text-xs sm:text-sm font-mono text-white placeholder-slate-500 focus:outline-none resize-none leading-relaxed disabled:opacity-60"
           />
         </div>
 
         {/* 6. Primary Action Button to Save/Publish */}
-        <div className="w-full pt-2">
-          <button
-            id="btn-save-edit-script"
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting || !isOwner}
-            className={`w-full py-2.5 sm:py-3 rounded-xl font-extrabold text-sm sm:text-base tracking-wide transition-all shadow-lg flex items-center justify-center gap-2 ${
-              isOwner
-                ? 'bg-[#2e52b2] hover:bg-[#3760cc] active:scale-[0.98] text-white'
-                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-            }`}
-          >
-            <span>{submitting ? 'Salvando...' : isOwner ? 'Salvar Alterações' : 'Apenas o autor pode salvar alterações'}</span>
-          </button>
-        </div>
+        {isOwner && (
+          <div className="w-full pt-2">
+            <button
+              id="btn-save-edited-script"
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="w-full py-2.5 sm:py-3 rounded-xl bg-[#2e52b2] hover:bg-[#3760cc] active:scale-[0.98] text-white font-extrabold text-sm sm:text-base tracking-wide transition-all shadow-lg flex items-center justify-center gap-2"
+            >
+              <span>{submitting ? 'Salvando...' : 'Salvar Alterações'}</span>
+            </button>
+          </div>
+        )}
+
       </div>
 
       {/* Password Modal */}
@@ -438,52 +442,46 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
             </div>
 
             <p className="text-xs text-slate-300">
-              Caso queira alterar a senha ou proteger o script, digite a nova senha abaixo.
+              {hasPassword
+                ? 'Este script está protegido por senha. Você pode alterar ou remover a senha.'
+                : 'Defina uma senha para proteger o script contra visualização não autorizada.'}
             </p>
 
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Digite a nova senha..."
-              className="w-full bg-[#101933] border border-[#2e4785] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-[#4367c2]"
-            />
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Digite a nova senha (ou deixe em branco)..."
+                className="w-full bg-[#1b2b54] border border-[#293e78] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400 font-mono"
+              />
+            </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex gap-2 pt-2">
               {hasPassword && (
                 <button
                   type="button"
                   onClick={() => {
-                    setPassword('');
                     setHasPassword(false);
+                    setPassword('');
                     setIsPasswordModalOpen(false);
-                    showToast('Senha desativada', 'O script agora é público.');
+                    showToast('Senha Desativada', 'O script ficará público ao salvar.');
                   }}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors mr-auto"
+                  className="flex-1 py-2 rounded-xl bg-red-600/30 hover:bg-red-600/50 text-red-300 border border-red-500/40 text-xs font-bold transition-colors"
                 >
                   Remover Senha
                 </button>
               )}
               <button
                 type="button"
-                onClick={() => setIsPasswordModalOpen(false)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
                 onClick={() => {
-                  if (password.trim().length > 0 && password.trim().length < 4) {
-                    showToast('Senha curta', 'A senha deve ter no mínimo 4 caracteres.', 'error');
-                    return;
-                  }
-                  if (password.trim().length >= 4) {
+                  if (password.trim()) {
                     setHasPassword(true);
+                    showToast('Senha Definida', 'A senha será aplicada ao salvar.');
                   }
                   setIsPasswordModalOpen(false);
                 }}
-                className="px-4 py-1.5 rounded-lg text-xs font-bold bg-[#2e52b2] hover:bg-[#3760cc] text-white transition-colors"
+                className="flex-1 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-colors shadow-md"
               >
                 Confirmar
               </button>

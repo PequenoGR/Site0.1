@@ -6,8 +6,18 @@ const USER_KEY = 'luauraw_user';
 
 export const authStorage = {
   getToken: () => localStorage.getItem(TOKEN_KEY),
-  setToken: (token: string) => localStorage.setItem(TOKEN_KEY, token),
-  removeToken: () => localStorage.removeItem(TOKEN_KEY),
+  setToken: (token: string) => {
+    localStorage.setItem(TOKEN_KEY, token);
+    if (typeof document !== 'undefined') {
+      document.cookie = `luauraw_token=${token}; path=/; max-age=604800; SameSite=Lax`;
+    }
+  },
+  removeToken: () => {
+    localStorage.removeItem(TOKEN_KEY);
+    if (typeof document !== 'undefined') {
+      document.cookie = 'luauraw_token=; path=/; max-age=0; SameSite=Lax';
+    }
+  },
   getUser: (): User | null => {
     try {
       const data = localStorage.getItem(USER_KEY);
@@ -21,6 +31,9 @@ export const authStorage = {
   clear: () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    if (typeof document !== 'undefined') {
+      document.cookie = 'luauraw_token=; path=/; max-age=0; SameSite=Lax';
+    }
   },
 };
 

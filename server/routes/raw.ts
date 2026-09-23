@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { db } from '../db.js';
-import { checkPasswordRateLimit, resetPasswordRateLimit } from '../security.js';
+import { checkPasswordRateLimit, resetPasswordRateLimit, JWT_SECRET, parseCookies } from '../security.js';
 
 const router = Router();
 
@@ -25,228 +26,268 @@ function getScriptSlug(title?: string): string {
   return `${clean || 'script'}.lua`;
 }
 
-function renderRawHtmlViewer(script: any, fullRawUrl: string, loadstringSnippet: string): string {
+function renderRawHtmlViewer(script: any, fullRawUrl: string, loadstringSnippet: string, isOwner: boolean = false): string {
   const lineCount = (script.code || '').split('\n').length;
-  const sizeBytes = Buffer.byteLength(script.code || '', 'utf8');
-  const sizeKb = (sizeBytes / 1024).toFixed(1);
+  const slug = getScriptSlug(script.title);
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(script.title)} - ScriptsGR RAW</title>
+  <title>${escapeHtml(script.title)} - Scripts GR</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
     body {
-      background-color: #030712;
-      color: #f1f5f9;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #000000;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      padding: 24px 20px;
     }
-    header {
-      background: #090d16;
-      border-bottom: 1px solid #1e293b;
-      padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-      font-weight: 900;
-      font-size: 18px;
-      letter-spacing: -0.5px;
-    }
-    .brand-blue { color: #3b82f6; }
-    .brand-white { color: #ffffff; }
-    .title-area {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .script-title {
-      font-size: 15px;
-      font-weight: 800;
-      color: #f8fafc;
-    }
-    .badge {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 6px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .badge-lua { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-    .badge-secure { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-    .badge-author { background: #1e293b; color: #94a3b8; }
-    .actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .btn {
-      padding: 7px 14px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      border: 1px solid transparent;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.15s ease;
-      text-decoration: none;
-    }
-    .btn-primary {
-      background: #2563eb;
-      color: #ffffff;
-    }
-    .btn-primary:hover { background: #1d4ed8; }
-    .btn-secondary {
-      background: #1e293b;
-      color: #e2e8f0;
-      border-color: #334155;
-    }
-    .btn-secondary:hover { background: #334155; color: #ffffff; }
-    .main-content {
-      flex: 1;
-      padding: 20px;
-      max-width: 1200px;
+    .top-bar {
       width: 100%;
+      max-width: 900px;
+      margin: 0 auto 36px auto;
+    }
+    .logo {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      display: inline-flex;
+      align-items: baseline;
+      text-decoration: none;
+      user-select: none;
+    }
+    .logo-gr-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-left: 5px;
+    }
+    .logo-gr-underline {
+      position: absolute;
+      bottom: -3px;
+      left: 0;
+      right: 0;
+      height: 3.5px;
+      background-color: #ef4444;
+      border-radius: 2px;
+    }
+    .container {
+      width: 100%;
+      max-width: 900px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      flex: 1;
     }
-    .url-bar {
-      background: #090d16;
-      border: 1px solid #1e293b;
-      border-radius: 12px;
-      padding: 10px 14px;
+    .lines-count {
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 10px;
+      letter-spacing: -0.2px;
+      user-select: none;
+    }
+    .blue-box {
+      background-color: #4f6ef7;
+      border-radius: 8px;
+      width: 100%;
+      min-height: 600px;
+      flex: 1;
+      padding: 16px 20px;
       display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+    }
+    .buttons-header {
+      display: flex;
+      justify-content: flex-end;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 12px;
-      color: #38bdf8;
+      gap: 10px;
+      width: 100%;
+    }
+    .btn-green {
+      background-color: #00d26a;
+      color: #ffffff;
+      border: none;
+      border-radius: 7px;
+      padding: 6px 18px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.15s ease, transform 0.1s ease;
+      user-select: none;
+      outline: none;
+    }
+    .btn-green:hover {
+      background-color: #00e676;
+      transform: translateY(-1px);
+    }
+    .btn-green:active {
+      transform: translateY(1px);
+    }
+    .code-area {
+      flex: 1;
+      margin-top: 14px;
+      overflow: auto;
+      width: 100%;
+    }
+    .code-area pre {
+      margin: 0;
+      padding: 0;
+      white-space: pre-wrap;
       word-break: break-all;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: #ffffff;
+      user-select: text;
     }
-    .meta-bar {
-      font-size: 12px;
-      color: #64748b;
-      display: flex;
-      gap: 16px;
-      font-weight: 600;
+    .code-area code {
+      font-family: inherit;
+      color: inherit;
     }
-    .code-container {
-      background: #090d16;
-      border: 1px solid #1e293b;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    .code-area::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
     }
-    pre {
-      padding: 16px;
-      overflow-x: auto;
-      font-family: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 13px;
-      line-height: 1.6;
-      color: #e2e8f0;
-      tab-size: 2;
+    .code-area::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+    }
+    .code-area::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.35);
+      border-radius: 4px;
+    }
+    .code-area::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.55);
     }
     .toast {
       position: fixed;
       bottom: 24px;
-      right: 24px;
-      background: #10b981;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background-color: #111827;
       color: #ffffff;
-      padding: 10px 18px;
-      border-radius: 10px;
-      font-weight: 700;
-      font-size: 13px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      padding: 12px 24px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 800;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+      border: 1px solid #374151;
       opacity: 0;
-      transform: translateY(12px);
-      transition: all 0.2s ease;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 9999;
       pointer-events: none;
-      z-index: 100;
     }
     .toast.show {
+      transform: translateX(-50%) translateY(0);
       opacity: 1;
-      transform: translateY(0);
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="title-area">
-      <a href="/" class="brand">
-        <span class="brand-blue">Scripts</span><span class="brand-white">GR</span>
-      </a>
-      <span class="script-title">${escapeHtml(script.title)}</span>
-      <span class="badge badge-lua">.lua</span>
-      <span class="badge badge-secure">HTTPS SSL</span>
-      ${script.authorUsername ? `<span class="badge badge-author">@${escapeHtml(script.authorUsername)}</span>` : ''}
+  <div class="top-bar">
+    <a href="/" class="logo">
+      <span>Scripts</span>
+      <span class="logo-gr-wrapper">
+        GR
+        <span class="logo-gr-underline"></span>
+      </span>
+    </a>
+  </div>
+
+  <main class="container">
+    <div class="lines-count">
+      ${lineCount}:Linhas
     </div>
 
-    <div class="actions">
-      <button class="btn btn-primary" onclick="copyText('${escapeHtml(loadstringSnippet)}', 'Script copiado!')">
-        Copiar Script
-      </button>
-      <button class="btn btn-secondary" onclick="copyText('${escapeHtml(fullRawUrl)}', 'Link RAW copiado!')">
-        Copiar Link RAW
-      </button>
-      <a href="?raw=1" class="btn btn-secondary">
-        Texto Puro (Raw)
-      </a>
-    </div>
-  </header>
+    <div class="blue-box">
+      <div class="buttons-header">
+        <button id="btn-copy" class="btn-green" onclick="handleCopy()">
+          Copiar
+        </button>
+        <button id="btn-download" class="btn-green" onclick="handleDownload()">
+          Abaixar
+        </button>
+      </div>
 
-  <main class="main-content">
-    <div class="url-bar">
-      <span>${escapeHtml(fullRawUrl)}</span>
-    </div>
-
-    <div class="meta-bar">
-      <span>Linhas: ${lineCount}</span>
-      <span>Tamanho: ${sizeKb} KB</span>
-      <span>Acessos: ${script.accessCount || 0}</span>
-    </div>
-
-    <div class="code-container">
-      <pre><code>${escapeHtml(script.code || '')}</code></pre>
+      <div class="code-area">
+        <pre><code>${escapeHtml(script.code || '')}</code></pre>
+      </div>
     </div>
   </main>
 
   <div id="toast" class="toast"></div>
 
   <script>
-    function copyText(text, msg) {
-      navigator.clipboard.writeText(text).then(function() {
-        showToast(msg);
-      });
+    var scriptData = ${JSON.stringify(script.code || '')};
+    var scriptFilename = ${JSON.stringify(slug)};
+
+    function showToast(message) {
+      var toast = document.getElementById('toast');
+      toast.innerText = message;
+      toast.classList.add('show');
+      setTimeout(function() {
+        toast.classList.remove('show');
+      }, 2000);
     }
-    function showToast(msg) {
-      var t = document.getElementById('toast');
-      t.innerText = msg;
-      t.classList.add('show');
-      setTimeout(function() { t.classList.remove('show'); }, 2000);
+
+    function handleCopy() {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(scriptData).then(function() {
+          showToast('Copiado!');
+        }).catch(function() {
+          fallbackCopy(scriptData);
+        });
+      } else {
+        fallbackCopy(scriptData);
+      }
+    }
+
+    function fallbackCopy(text) {
+      var textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showToast('Copiado!');
+      } catch (err) {
+        showToast('Erro ao copiar');
+      }
+      document.body.removeChild(textArea);
+    }
+
+    function handleDownload() {
+      try {
+        var blob = new Blob([scriptData], { type: 'text/plain;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = scriptFilename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast('Download iniciado!');
+      } catch (e) {
+        window.location.href = window.location.pathname + '?download=1';
+      }
     }
   </script>
 </body>
@@ -254,12 +295,12 @@ function renderRawHtmlViewer(script: any, fullRawUrl: string, loadstringSnippet:
 }
 
 /**
- * RAW Luau script endpoint handler (GET and POST)
+ * RAW script endpoint handler (GET and POST)
  * 
  * Strict compliance for Roblox loadstring(game:HttpGet("..."))() and Web browser access:
- * - Public scripts: Returns 200 with raw Luau code (or HTML if browser)
+ * - Public scripts: Returns 200 with raw script (or HTML if browser)
  * - Protected scripts without key/pass: Returns 401 Unauthorized (text/plain) or HTML Unlock UI for browser
- * - Protected scripts with valid key/pass: Returns 200 with Luau code (or rich unlocked HTML preview in browser)
+ * - Protected scripts with valid key/pass: Returns 200 with code (or rich unlocked HTML preview in browser)
  * - Protected scripts with invalid key/pass: Returns 401 with error message (and error alert in browser)
  */
 const handleRawScript = (req: Request, res: Response) => {
@@ -302,9 +343,34 @@ const handleRawScript = (req: Request, res: Response) => {
     const userAgent = (req.headers['user-agent'] as string) || '';
     const isRobloxOrExecutor = /roblox|synapse|krnl|fluxus|scriptware|delta|arceus|codex|electron|solara|wave|celery|evon|httpclient/i.test(userAgent);
 
-    const isBrowser = !wantsRawPlain && !isRobloxOrExecutor && Boolean(
-      req.headers.accept?.includes('text/html') ||
-      req.headers.accept?.includes('application/xhtml+xml')
+    const isBrowser = !isRobloxOrExecutor && (
+      Boolean(req.headers.accept?.includes('text/html') || req.headers.accept?.includes('application/xhtml+xml')) ||
+      (!wantsRawPlain && !userAgent.includes('curl') && !userAgent.includes('Wget'))
+    );
+
+    // Extract logged-in user from headers or cookie
+    const cookieHeader = req.headers.cookie;
+    const cookies = parseCookies(cookieHeader);
+    const rawToken = req.headers.authorization?.replace(/^Bearer\s+/i, '').trim() ||
+      cookies['luauraw_token'] ||
+      (req.query.token as string);
+
+    let loggedInUser: { id: string; username: string; email: string } | null = null;
+    if (rawToken) {
+      try {
+        const decoded = jwt.verify(rawToken, JWT_SECRET) as { id: string; username: string; email: string };
+        const user = db.getUserById(decoded.id);
+        if (user) {
+          loggedInUser = { id: user.id, username: user.username, email: user.email };
+        }
+      } catch {}
+    }
+
+    const isOwner = Boolean(
+      loggedInUser && (
+        script.userId === loggedInUser.id ||
+        (script.authorEmail && loggedInUser.email && script.authorEmail.toLowerCase() === loggedInUser.email.toLowerCase())
+      )
     );
 
     const host = req.get('host') || 'scriptsgr.dev';
@@ -313,12 +379,28 @@ const handleRawScript = (req: Request, res: Response) => {
     const prettyUrl = `${protocol}://${host}/raw/${script.id}/${slug}`;
     const loadstringCode = `loadstring(game:HttpGet("${prettyUrl}"))()`;
 
+    // Non-owner in a browser cannot bypass to plain text via ?raw=1
+    if (wantsRawPlain && isBrowser && !isOwner) {
+      if (script.isPasswordProtected) {
+        // Will continue to password check below
+      } else {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.status(200).send(renderRawHtmlViewer(script, prettyUrl, loadstringCode, false));
+      }
+    }
+
     // 2. Public script
     if (!script.isPasswordProtected) {
       db.incrementScriptAccess(script.id);
+      if (req.query.download === '1') {
+        const downloadFilename = getScriptSlug(script.title);
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+        return res.status(200).send(script.code);
+      }
       if (isBrowser) {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        return res.status(200).send(renderRawHtmlViewer(script, prettyUrl, loadstringCode));
+        return res.status(200).send(renderRawHtmlViewer(script, prettyUrl, loadstringCode, isOwner));
       }
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       return res.status(200).send(script.code);
@@ -383,12 +465,12 @@ const handleRawScript = (req: Request, res: Response) => {
       return res.status(429).send('-- [ScriptsGR Shield] 429 Too Many Requests: Muitas tentativas incorretas. Tente novamente em 5 minutos.');
     }
 
-    let isAuthorized = false;
-    let authMethod: 'key' | 'password' | null = null;
+    let isAuthorized = Boolean(isOwner);
+    let authMethod: 'owner' | 'key' | 'password' | null = isOwner ? 'owner' : null;
     let authorizedParam = '';
 
     // A. Check against Access Keys list
-    if (candidateKey && script.accessKeys && script.accessKeys.length > 0) {
+    if (!isAuthorized && candidateKey && script.accessKeys && script.accessKeys.length > 0) {
       if (script.accessKeys.some(k => k.key === candidateKey)) {
         isAuthorized = true;
         authMethod = 'key';
@@ -437,15 +519,23 @@ const handleRawScript = (req: Request, res: Response) => {
 
     const fullUrl = `${protocol}://${host}/raw/${script.id}`;
 
-    // If authorized (or public): Return pure RAW Luau code directly
+    // If authorized:
+    // In Roblox/Executor: Return pure RAW script directly
+    // In Browser: Return viewer with anti-leak protection (only owner can inspect code)
     if (isAuthorized) {
       db.incrementScriptAccess(script.id);
+      if (req.query.download === '1') {
+        const downloadFilename = getScriptSlug(script.title);
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+        return res.status(200).send(script.code);
+      }
       if (isBrowser) {
         const authQuery = authorizedParam ? `?${authorizedParam}` : '';
         const authedPrettyUrl = `${prettyUrl}${authQuery}`;
         const authedLoadstring = `loadstring(game:HttpGet("${authedPrettyUrl}"))()`;
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        return res.status(200).send(renderRawHtmlViewer(script, authedPrettyUrl, authedLoadstring));
+        return res.status(200).send(renderRawHtmlViewer(script, authedPrettyUrl, authedLoadstring, isOwner));
       }
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       return res.status(200).send(script.code);

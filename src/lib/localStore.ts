@@ -241,6 +241,7 @@ export const localStore = {
       script: {
         ...found,
         code: hasAccess ? found.code : '-- [PROTEGIDO] Insira a senha para visualizar o código',
+        accessKeys: isOwner ? found.accessKeys : [],
         isOwner,
       },
     };

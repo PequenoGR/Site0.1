@@ -253,7 +253,7 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
 
         {/* 5. Code Dark Blue Text Area Box */}
         <div className="w-full bg-[#1b2b54] border border-[#293e78] rounded-xl p-3 shadow-inner">
-          {script.isPasswordProtected && !isUnlocked ? (
+          {script.isPasswordProtected && !isUnlocked && !script.isOwner ? (
             <div className="py-8 flex flex-col items-center justify-center gap-2 text-center">
               <Lock className="w-6 h-6 text-amber-400" />
               <p className="text-xs text-slate-300">Este script está protegido por senha.</p>
@@ -268,7 +268,7 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
           ) : (
             <textarea
               id="textarea-view-script-code"
-              rows={7}
+              rows={8}
               readOnly
               value={script.code || ''}
               placeholder=""

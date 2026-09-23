@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   Code2,
   Lock,
@@ -9,32 +9,24 @@ import {
   ChevronUp,
   Check,
   X,
-  Upload,
   ArrowLeft,
   UserCheck,
   LogIn,
+  Gamepad2,
+  Search,
+  Sparkles,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { useAppVersion } from '../context/VersionContext';
 import { copyToClipboard } from '../lib/clipboard';
+import { RobloxGameSelectorModal } from '../components/RobloxGameSelectorModal';
+import { CATEGORIES_LIST, POPULAR_ROBLOX_GAMES } from '../lib/robloxGames';
 
 interface CreateScriptPageProps {
   onNavigate: (tab: string, scriptId?: string) => void;
 }
-
-const CATEGORIES = [
-  'Geral',
-  'Blox Fruits',
-  'Universal',
-  'Arsenal',
-  'Pet Simulator 99',
-  'Da Hood',
-  'Blade Ball',
-  'BedWars',
-  'Outros',
-];
 
 export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }) => {
   const { user } = useAuth();
@@ -42,9 +34,17 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
   const { incrementVersion } = useAppVersion();
 
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('Geral');
+  const [category, setCategory] = useState('Universal');
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  
+  // Default to Universal script thumbnail from verified database
+  const [selectedGameName, setSelectedGameName] = useState<string>('Universal / Geral');
+  const [photoPreview, setPhotoPreview] = useState<string | null>(
+    POPULAR_ROBLOX_GAMES[0]?.thumbnailUrl || 'https://tr.rbxcdn.com/180DAY-774ec14539b264f85fdb6e8a34dfa344/512/512/Image/Png/noFilter'
+  );
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>('2753915549');
+  
+  const [isGameSelectorOpen, setIsGameSelectorOpen] = useState(false);
   const [code, setCode] = useState('');
   
   // Password modal/state
@@ -56,29 +56,26 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
   const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Photo Upload Handler (file or drag)
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      showToast('Formato Inválido', 'Por favor envie um arquivo de imagem (PNG, JPG, WEBP).', 'error');
-      return;
+  // When user picks a verified game from the Roblox catalog / Place ID search
+  const handleGameSelected = (game: {
+    name: string;
+    category: string;
+    thumbnailUrl: string;
+    placeId?: string;
+  }) => {
+    setSelectedGameName(game.name);
+    setPhotoPreview(game.thumbnailUrl);
+    setSelectedPlaceId(game.placeId);
+    
+    // Auto-update category
+    if (game.category) {
+      setCategory(game.category);
     }
-
-    const reader = new FileReader();
-    reader.onload = (uploadEvent) => {
-      const result = uploadEvent.target?.result as string;
-      setPhotoPreview(result);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // Trigger file selection
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
+    
+    // Auto-suggest name if empty
+    if (!name.trim()) {
+      setName(`${game.name} Hub`);
+    }
   };
 
   // Download Code as .lua file
@@ -143,7 +140,7 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
       const res = await api.createScript({
         title: name.trim(),
         category: category,
-        description: '',
+        description: selectedGameName ? `Jogo: ${selectedGameName}` : '',
         thumbnailUrl: photoPreview || '',
         code: code,
         isPasswordProtected: hasPassword && Boolean(password),
@@ -151,7 +148,7 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
       });
 
       incrementVersion(`Script criado: ${res.script.title}`);
-      showToast('Script criado com sucesso!', `Script ${res.script.title} registrado e vinculado à sua conta.`);
+      showToast('Script criado com sucesso!', `Script ${res.script.title} registrado com imagem oficial do jogo.`);
       onNavigate('dashboard');
     } catch (err: any) {
       showToast('Erro ao criar script', err.message, 'error');
@@ -165,13 +162,13 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
 
   return (
     <div className="w-full min-h-[calc(100vh-65px)] bg-black text-white flex flex-col items-center justify-center p-4 sm:p-6 pb-16 select-none">
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        className="hidden"
+      {/* Roblox Game Selector Modal */}
+      <RobloxGameSelectorModal
+        isOpen={isGameSelectorOpen}
+        onClose={() => setIsGameSelectorOpen(false)}
+        onSelectGame={handleGameSelected}
+        currentThumbnailUrl={photoPreview}
+        currentGameName={selectedGameName}
       />
 
       <div className="w-full max-w-[340px] sm:max-w-[380px] flex flex-col items-center gap-4">
@@ -216,29 +213,46 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
           </div>
         )}
 
-        
-        {/* 1. Upload Photo Container */}
+        {/* 1. Official Roblox Game Photo Selector Box */}
         <div
-          id="btn-upload-photo"
-          onClick={handleUploadClick}
-          className="w-full aspect-[4/3] rounded-2xl bg-gradient-to-r from-[#29687a] via-[#1a4b6e] to-[#123668] border border-[#2b5d84] flex flex-col items-center justify-center cursor-pointer relative overflow-hidden transition-all duration-200 hover:brightness-110 active:scale-[0.99] shadow-xl group"
+          id="btn-choose-roblox-game"
+          onClick={() => setIsGameSelectorOpen(true)}
+          className="w-full aspect-[4/3] rounded-2xl bg-[#14234b] border border-[#2b5d84] flex flex-col items-center justify-center cursor-pointer relative overflow-hidden transition-all duration-200 hover:brightness-110 active:scale-[0.99] shadow-xl group"
         >
           {photoPreview ? (
             <>
               <img
                 src={photoPreview}
-                alt="Upload Preview"
+                alt={selectedGameName || "Roblox Game Preview"}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <Upload className="w-5 h-5 text-white" />
-                <span className="text-xs font-bold text-white">Alterar Foto</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-between p-3">
+                <div className="self-end px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-xs border border-white/20 text-[10px] font-bold text-emerald-300 flex items-center gap-1 shadow-sm">
+                  <Sparkles className="w-3 h-3 text-emerald-400" />
+                  <span>Foto Oficial Roblox</span>
+                </div>
+                
+                <div className="space-y-0.5">
+                  <p className="text-sm font-extrabold text-white drop-shadow-md truncate">
+                    {selectedGameName || 'Jogo Selecionado'}
+                  </p>
+                  <p className="text-[11px] font-medium text-blue-300 flex items-center gap-1">
+                    <Gamepad2 className="w-3.5 h-3.5" />
+                    <span>Clique para trocar de jogo ou buscar por ID</span>
+                  </p>
+                </div>
               </div>
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl sm:text-3xl font-extrabold text-[#b8dff0] tracking-wide drop-shadow-md">
-                Upload Photo
+            <div className="flex flex-col items-center justify-center gap-2 p-4 text-center">
+              <div className="w-12 h-12 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400">
+                <Gamepad2 className="w-6 h-6" />
+              </div>
+              <span className="text-base sm:text-lg font-extrabold text-[#b8dff0] tracking-wide drop-shadow-md">
+                Escolher Jogo do Roblox
+              </span>
+              <span className="text-[11px] text-slate-400">
+                Puxa a foto oficial do Roblox automaticamente
               </span>
             </div>
           )}
@@ -255,7 +269,7 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder=""
+              placeholder="Ex: Blox Fruits Auto Farm / Hub"
               className="w-full bg-transparent text-sm sm:text-base font-semibold text-white placeholder-slate-500 focus:outline-none"
             />
           </div>
@@ -271,22 +285,22 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
             onClick={() => setIsCategoryOpen(!isCategoryOpen)}
             className="w-full bg-[#1e2f5b] border border-[#2e4785] rounded-xl px-3.5 py-2 sm:py-2.5 flex items-center justify-between cursor-pointer transition-all hover:bg-[#25396e] active:scale-[0.99]"
           >
-            <span className="text-xs sm:text-sm font-semibold text-white">
+            <span className="text-xs sm:text-sm font-semibold text-white truncate pr-2">
               {category}
             </span>
-            <span className="text-white text-xs font-bold">
+            <span className="text-white text-xs font-bold shrink-0">
               {isCategoryOpen ? (
                 <ChevronUp className="w-4 h-4 stroke-[3]" />
               ) : (
-                <span className="font-mono text-sm leading-none">^</span>
+                <ChevronDown className="w-4 h-4 stroke-[3]" />
               )}
             </span>
           </div>
 
           {/* Categoria dropdown list */}
           {isCategoryOpen && (
-            <div className="absolute top-full mt-1.5 z-40 w-full bg-[#172346] border border-[#2e4785] rounded-xl overflow-hidden shadow-2xl py-1">
-              {CATEGORIES.map((cat) => (
+            <div className="absolute top-full mt-1.5 z-40 w-full bg-[#172346] border border-[#2e4785] rounded-xl overflow-hidden shadow-2xl py-1 max-h-60 overflow-y-auto">
+              {CATEGORIES_LIST.map((cat) => (
                 <button
                   key={cat}
                   type="button"
@@ -300,8 +314,8 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
                       : 'text-slate-300 hover:bg-[#1e2f5b] hover:text-white'
                   }`}
                 >
-                  <span>{cat}</span>
-                  {category === cat && <Check className="w-3.5 h-3.5 text-blue-300" />}
+                  <span className="truncate">{cat}</span>
+                  {category === cat && <Check className="w-3.5 h-3.5 text-blue-300 shrink-0 ml-2" />}
                 </button>
               ))}
             </div>
@@ -367,7 +381,7 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
             rows={7}
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            placeholder=""
+            placeholder="Cole seu código Lua/Luau aqui..."
             spellCheck={false}
             className="w-full bg-transparent text-xs sm:text-sm font-mono text-white placeholder-slate-500 focus:outline-none resize-none leading-relaxed"
           />
@@ -407,53 +421,46 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
             </div>
 
             <p className="text-xs text-slate-300">
-              Caso queira proteger a execução com senha, informe-a abaixo. Deixe em branco para manter o script público.
+              Defina uma senha para proteger o código. Usuários precisarão digitar esta senha para visualizar ou desbloquear.
             </p>
 
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Digite a senha (mínimo 4 caracteres)..."
-              className="w-full bg-[#101933] border border-[#2e4785] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-[#4367c2]"
-            />
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Digite a senha (opcional)..."
+                className="w-full bg-[#1b2b54] border border-[#293e78] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400 font-mono"
+              />
+            </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex gap-2 pt-2">
               {hasPassword && (
                 <button
                   type="button"
                   onClick={() => {
-                    setPassword('');
                     setHasPassword(false);
+                    setPassword('');
                     setIsPasswordModalOpen(false);
+                    showToast('Senha Removida', 'O script agora é público.');
                   }}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors mr-auto"
+                  className="flex-1 py-2 rounded-xl bg-red-600/30 hover:bg-red-600/50 text-red-300 border border-red-500/40 text-xs font-bold transition-colors"
                 >
                   Remover Senha
                 </button>
               )}
               <button
                 type="button"
-                onClick={() => setIsPasswordModalOpen(false)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
                 onClick={() => {
-                  if (password.trim().length > 0 && password.trim().length < 4) {
-                    showToast('Senha curta', 'A senha deve ter no mínimo 4 caracteres.', 'error');
-                    return;
+                  if (password.trim()) {
+                    setHasPassword(true);
+                    showToast('Senha Definida', 'O script está protegido.');
+                  } else {
+                    setHasPassword(false);
                   }
-                  setHasPassword(Boolean(password.trim()));
                   setIsPasswordModalOpen(false);
-                  showToast(
-                    password.trim() ? 'Senha configurada' : 'Script público',
-                    password.trim() ? 'O script exigirá autenticação.' : 'O script poderá ser acessado livremente.'
-                  );
                 }}
-                className="px-4 py-1.5 rounded-lg text-xs font-bold bg-[#2e52b2] hover:bg-[#3760cc] text-white transition-colors"
+                className="flex-1 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-colors shadow-md"
               >
                 Confirmar
               </button>

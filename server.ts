@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import authRoutes from './server/routes/auth.js';
 import scriptRoutes from './server/routes/scripts.js';
 import rawRoutes from './server/routes/raw.js';
+import robloxRoutes from './server/routes/roblox.js';
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ async function startServer() {
   // API REST routes
   app.use('/api/auth', authRoutes);
   app.use('/api/scripts', scriptRoutes);
+  app.use('/api/roblox', robloxRoutes);
 
   // Health check
   app.get('/api/health', (req, res) => {

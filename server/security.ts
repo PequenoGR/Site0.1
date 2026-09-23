@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { db } from './db.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'luau-raw-fallback-secret-key-2026';
+export const JWT_SECRET = process.env.JWT_SECRET || 'luau-raw-fallback-secret-key-2026';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -10,6 +10,19 @@ export interface AuthenticatedRequest extends Request {
     username: string;
     email: string;
   };
+}
+
+export function parseCookies(cookieHeader?: string): Record<string, string> {
+  const list: Record<string, string> = {};
+  if (!cookieHeader) return list;
+  cookieHeader.split(';').forEach((cookie) => {
+    const parts = cookie.split('=');
+    const name = parts[0]?.trim();
+    if (name) {
+      list[name] = decodeURIComponent(parts.slice(1).join('=').trim());
+    }
+  });
+  return list;
 }
 
 // In-memory rate limiting structures
@@ -88,14 +101,28 @@ export function generateToken(payload: { id: string; username: string; email: st
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
 }
 
+// Extract JWT token from header, cookie or query
+function extractToken(req: Request): string {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.split(' ')[1].trim();
+  }
+  if (req.headers.cookie) {
+    const cookies = parseCookies(req.headers.cookie);
+    if (cookies['luauraw_token']) {
+      return cookies['luauraw_token'];
+    }
+  }
+  return '';
+}
+
 // Verify JWT middleware (Optional: if token exists, attaches user, does not reject if missing)
 export function optionalAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const token = extractToken(req);
+  if (!token) {
     return next();
   }
 
-  const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { id: string; username: string; email: string };
     const user = db.getUserById(decoded.id);
@@ -110,12 +137,11 @@ export function optionalAuth(req: AuthenticatedRequest, res: Response, next: Nex
 
 // Strict Auth Middleware (Requires valid logged-in user)
 export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const token = extractToken(req);
+  if (!token) {
     return res.status(401).json({ error: 'Acesso não autorizado. Por favor faça login.' });
   }
 
-  const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { id: string; username: string; email: string };
     const user = db.getUserById(decoded.id);

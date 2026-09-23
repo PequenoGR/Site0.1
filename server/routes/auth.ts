@@ -53,6 +53,7 @@ router.post('/register', authLimiter, (req, res) => {
     });
 
     const token = generateToken({ id: newUser.id, username: newUser.username, email: newUser.email });
+    res.setHeader('Set-Cookie', `luauraw_token=${token}; Path=/; Max-Age=604800; SameSite=Lax`);
 
     return res.status(201).json({
       message: 'Conta criada com sucesso!',
@@ -91,6 +92,7 @@ router.post('/login', authLimiter, (req, res) => {
     }
 
     const token = generateToken({ id: user.id, username: user.username, email: user.email });
+    res.setHeader('Set-Cookie', `luauraw_token=${token}; Path=/; Max-Age=604800; SameSite=Lax`);
 
     return res.json({
       message: 'Login efetuado com sucesso!',

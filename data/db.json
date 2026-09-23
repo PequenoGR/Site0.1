@@ -10,5 +10,24 @@
       "accentColor": "amber"
     }
   ],
-  "scripts": []
+  "scripts": [
+    {
+      "id": "n20aq0",
+      "userId": "user_demo_001",
+      "authorUsername": "demo",
+      "authorEmail": "demo@luauraw.dev",
+      "title": "Interface Hub",
+      "category": "Universal",
+      "description": "Universal / Geral",
+      "code": "local INTERFACE_URL =\n    \"https://raw.githubusercontent.com/PequenoGR/Gr_Script/refs/heads/main/InterfaceScript\"\n\nlocal oldHub = getgenv().GRHub\nif oldHub then\n    pcall(function()\n        if oldHub.GUI then oldHub.GUI:Destroy() end\n        if oldHub.MainFrame then oldHub.MainFrame:Destroy() end\n    end)\nend\n\ngetgenv().GRHub = nil\n\nlocal httpOk, source = pcall(function()\n    return game:HttpGet(INTERFACE_URL)\nend)\n\nif not httpOk or not source or source == \"\" then\n    warn(\"[GR Hub] HttpGet failed: \" .. tostring(source))\n    return\nend\n\nlocal fn, compileErr = loadstring(source)\n\nif not fn then\n    warn(\"[GR Hub] Compile failed: \" .. tostring(compileErr))\n    return\nend\n\nlocal execOk, execErr = pcall(fn)\n\nif not execOk then\n    warn(\"[GR Hub] Exec failed: \" .. tostring(execErr))\n    return\nend\n\nprint(\"[GR Hub] Script carregado com sucesso!\")",
+      "thumbnailUrl": "https://tr.rbxcdn.com/180DAY-774ec14539b264f85fdb6e8a34dfa344/512/512/Image/Png/noFilter",
+      "isPasswordProtected": false,
+      "passwordHash": "",
+      "accessKeys": [],
+      "accessCount": 24,
+      "lastAccessedAt": "2026-09-23T12:00:00.000Z",
+      "createdAt": "2026-09-18T18:30:00.000Z",
+      "updatedAt": "2026-09-23T12:00:00.000Z"
+    }
+  ]
 }
