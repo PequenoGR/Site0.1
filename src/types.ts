@@ -1,10 +1,30 @@
+export type ThemeMode = 'dark' | 'light';
+export type AccentColor =
+  | 'cyan'
+  | 'emerald'
+  | 'violet'
+  | 'amber'
+  | 'rose'
+  | 'blue'
+  | 'red'
+  | 'pink'
+  | 'black'
+  | 'white'
+  | 'orange'
+  | 'yellow'
+  | 'purple'
+  | 'lime'
+  | 'slate'
+  | 'indigo'
+  | 'teal';
+
 export interface User {
   id: string;
   username: string;
   email: string;
   createdAt: string;
   themePreference?: 'dark' | 'light';
-  accentColor?: 'cyan' | 'emerald' | 'violet' | 'amber' | 'rose' | 'blue' | 'red' | 'pink';
+  accentColor?: AccentColor;
 }
 
 export interface AccessKey {
@@ -34,9 +54,6 @@ export interface ScriptItem {
   isOwner?: boolean;
   isUnlocked?: boolean;
 }
-
-export type ThemeMode = 'dark' | 'light';
-export type AccentColor = 'cyan' | 'emerald' | 'violet' | 'amber' | 'rose' | 'blue' | 'red' | 'pink';
 
 export interface ToastMessage {
   id: string;

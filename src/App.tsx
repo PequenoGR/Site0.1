@@ -34,7 +34,7 @@ function AppContent() {
       const params = new URLSearchParams(queryStr || '');
       const idParam = params.get('id');
 
-      if (['dashboard', 'create', 'settings', 'docs', 'login', 'register', 'raw-manager'].includes(route)) {
+      if (['dashboard', 'my-scripts', 'create', 'settings', 'docs', 'login', 'register', 'raw-manager'].includes(route)) {
         setCurrentTab(route);
         if (idParam) setSelectedScriptId(idParam);
       } else if (route.startsWith('view/')) {
@@ -97,6 +97,9 @@ function AppContent() {
         <main className={`flex-1 w-full mx-auto ${currentTab === 'create' || currentTab === 'edit' || currentTab === 'view' ? 'p-0 max-w-full' : 'p-4 sm:p-6 lg:p-8 max-w-7xl'}`}>
           {currentTab === 'dashboard' && (
             <DashboardPage onNavigate={navigateTo} searchQuery={searchQuery} />
+          )}
+          {currentTab === 'my-scripts' && (
+            <DashboardPage onNavigate={navigateTo} searchQuery={searchQuery} isMyScripts={true} />
           )}
           {currentTab === 'create' && (
             <CreateScriptPage onNavigate={navigateTo} />

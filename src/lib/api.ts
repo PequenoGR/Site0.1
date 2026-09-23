@@ -192,42 +192,74 @@ export const api = {
 
   // Scripts
   async getScripts(params?: { filter?: string; search?: string; scope?: string }): Promise<{ scripts: ScriptItem[] }> {
+    const currentUser = authStorage.getUser();
     try {
       const query = new URLSearchParams();
       if (params?.filter) query.set('filter', params.filter);
       if (params?.search) query.set('search', params.search);
       if (params?.scope) query.set('scope', params.scope);
       const res = await request<any>(`/api/scripts?${query.toString()}`);
-      const scripts: ScriptItem[] = Array.isArray(res?.scripts)
+      const serverScripts: ScriptItem[] = Array.isArray(res?.scripts)
         ? res.scripts
         : Array.isArray(res)
         ? res
         : [];
-      return { scripts };
-    } catch (err: any) {
-      if (err.message === 'FALLBACK_TO_LOCAL' || fallbackToLocal) {
-        const currentUser = authStorage.getUser();
-        const localRes = localStore.getScripts(params, currentUser?.id);
-        const scripts: ScriptItem[] = Array.isArray(localRes?.scripts) ? localRes.scripts : [];
-        return { scripts };
+
+      // Check if localStore has any scripts not on the server (e.g. after container/dev restart)
+      const localScripts = localStore.getStoredScripts();
+      const missingOnServer = localScripts.filter((ls) => !serverScripts.some((ss) => ss.id === ls.id));
+      if (missingOnServer.length > 0) {
+        request('/api/scripts/sync', {
+          method: 'POST',
+          body: JSON.stringify({ scripts: missingOnServer }),
+        }).catch(() => {});
       }
-      throw err;
+
+      // Merge and persist locally so they are never lost
+      const merged = localStore.syncWithServer(serverScripts, currentUser?.id);
+      
+      let filtered = merged;
+      if (params?.scope === 'mine' && currentUser) {
+        filtered = filtered.filter((s) => s.isOwner || s.userId === currentUser.id);
+      }
+      if (params?.filter === 'public') {
+        filtered = filtered.filter((s) => !s.isPasswordProtected);
+      } else if (params?.filter === 'protected') {
+        filtered = filtered.filter((s) => s.isPasswordProtected);
+      }
+      if (params?.search?.trim()) {
+        const q = params.search.trim().toLowerCase();
+        filtered = filtered.filter(
+          (s) =>
+            s.title.toLowerCase().includes(q) ||
+            (s.category && s.category.toLowerCase().includes(q)) ||
+            (s.description && s.description.toLowerCase().includes(q)) ||
+            s.id.toLowerCase().includes(q)
+        );
+      }
+
+      return { scripts: filtered };
+    } catch (err: any) {
+      const localRes = localStore.getScripts(params, currentUser?.id);
+      const scripts: ScriptItem[] = Array.isArray(localRes?.scripts) ? localRes.scripts : [];
+      return { scripts };
     }
   },
 
   async getScriptById(id: string, key?: string, password?: string): Promise<{ script: ScriptItem }> {
+    const currentUser = authStorage.getUser();
     try {
       const query = new URLSearchParams();
       if (key) query.set('key', key);
       if (password) query.set('password', password);
       const qs = query.toString() ? `?${query.toString()}` : '';
-      return await request<{ script: ScriptItem }>(`/api/scripts/${id}${qs}`);
-    } catch (err: any) {
-      if (err.message === 'FALLBACK_TO_LOCAL' || fallbackToLocal) {
-        const currentUser = authStorage.getUser();
-        return localStore.getScriptById(id, key, password, currentUser?.id);
+      const res = await request<{ script: ScriptItem }>(`/api/scripts/${id}${qs}`);
+      if (res?.script) {
+        localStore.saveExternalScript(res.script);
       }
-      throw err;
+      return res;
+    } catch (err: any) {
+      return localStore.getScriptById(id, key, password, currentUser?.id);
     }
   },
 
@@ -240,17 +272,25 @@ export const api = {
     isPasswordProtected: boolean;
     password?: string;
   }): Promise<{ message: string; script: ScriptItem }> {
+    const currentUser = authStorage.getUser();
     try {
-      return await request<{ message: string; script: ScriptItem }>('/api/scripts', {
+      const res = await request<{ message: string; script: ScriptItem }>('/api/scripts', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-    } catch (err: any) {
-      if (err.message === 'FALLBACK_TO_LOCAL' || fallbackToLocal) {
-        const currentUser = authStorage.getUser();
-        return localStore.createScript(payload, currentUser);
+      if (res?.script) {
+        localStore.saveExternalScript({
+          ...res.script,
+          code: payload.code,
+          isOwner: true,
+          userId: currentUser?.id || 'user_demo_001',
+          authorUsername: currentUser?.username || 'demo',
+          authorEmail: currentUser?.email,
+        });
       }
-      throw err;
+      return res;
+    } catch (err: any) {
+      return localStore.createScript(payload, currentUser);
     }
   },
 
@@ -266,30 +306,28 @@ export const api = {
       password?: string;
     }
   ): Promise<{ message: string; script: ScriptItem }> {
+    const currentUser = authStorage.getUser();
     try {
-      return await request<{ message: string; script: ScriptItem }>(`/api/scripts/${id}`, {
+      const res = await request<{ message: string; script: ScriptItem }>(`/api/scripts/${id}`, {
         method: 'PUT',
         body: JSON.stringify(payload),
       });
+      localStore.updateScript(id, payload, currentUser?.id);
+      return res;
     } catch (err: any) {
-      if (err.message === 'FALLBACK_TO_LOCAL' || fallbackToLocal) {
-        const currentUser = authStorage.getUser();
-        return localStore.updateScript(id, payload, currentUser?.id);
-      }
-      throw err;
+      return localStore.updateScript(id, payload, currentUser?.id);
     }
   },
 
   async deleteScript(id: string): Promise<{ message: string }> {
     try {
-      return await request<{ message: string }>(`/api/scripts/${id}`, {
+      const res = await request<{ message: string }>(`/api/scripts/${id}`, {
         method: 'DELETE',
       });
+      localStore.deleteScript(id);
+      return res;
     } catch (err: any) {
-      if (err.message === 'FALLBACK_TO_LOCAL' || fallbackToLocal) {
-        return localStore.deleteScript(id);
-      }
-      throw err;
+      return localStore.deleteScript(id);
     }
   },
 

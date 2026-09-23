@@ -101,7 +101,9 @@ export const ConsoleScriptCard: React.FC<ConsoleScriptCardProps> = ({ script, on
         {/* Script / Game Name Display in Large Bold Font */}
         {displayName && (
           <div className="mt-2.5">
-            <h3 className="text-xl sm:text-2xl font-black text-white leading-tight font-['Nunito',sans-serif] drop-shadow-sm truncate">
+            <h3 className={`text-xl sm:text-2xl font-black leading-tight font-['Nunito',sans-serif] drop-shadow-sm truncate ${
+              accentInfo.cardBgHex === '#f8fafc' ? 'text-slate-900' : 'text-white'
+            }`}>
               {displayName}
             </h3>
           </div>

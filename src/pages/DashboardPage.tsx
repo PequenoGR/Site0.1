@@ -3,6 +3,9 @@ import {
   Plus,
   Search,
   Terminal,
+  Code2,
+  FolderLock,
+  Sparkles,
 } from 'lucide-react';
 import { ScriptItem } from '../types';
 import { api } from '../lib/api';
@@ -11,14 +14,21 @@ import { ScriptDetailModal } from '../components/ScriptDetailModal';
 import { PasswordModal } from '../components/PasswordModal';
 import { useToast } from '../components/Toast';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { useAppVersion } from '../context/VersionContext';
 
 interface DashboardPageProps {
   onNavigate: (tab: string, scriptId?: string) => void;
   searchQuery?: string;
+  isMyScripts?: boolean;
 }
 
-export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, searchQuery = '' }) => {
+export const DashboardPage: React.FC<DashboardPageProps> = ({
+  onNavigate,
+  searchQuery = '',
+  isMyScripts = false,
+}) => {
+  const { user } = useAuth();
   const { showToast } = useToast();
   const { accentInfo } = useTheme();
   const { incrementVersion } = useAppVersion();
@@ -39,9 +49,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, search
       const res = await api.getScripts({
         filter: 'all',
         search: localSearch,
-        scope: 'explore',
+        scope: isMyScripts ? 'mine' : 'explore',
       });
-      const list = Array.isArray(res?.scripts) ? res.scripts : [];
+      let list = Array.isArray(res?.scripts) ? res.scripts : [];
+      if (isMyScripts) {
+        list = list.filter((s) => s.isOwner || (user && s.userId === user.id));
+      }
       setScripts(list);
     } catch (err: any) {
       showToast('Erro ao carregar scripts', err.message, 'error');
@@ -57,7 +70,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, search
 
   useEffect(() => {
     fetchScripts();
-  }, [localSearch]);
+  }, [localSearch, isMyScripts]);
 
   const handleDeleteScript = async (id: string) => {
     if (!window.confirm(`Tem certeza que deseja excluir o script "${id}"? Esta ação não pode ser desfeita.`)) {
@@ -80,6 +93,54 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, search
 
   return (
     <div className="space-y-5">
+      {/* Meus Scripts Header Banner if on my-scripts tab */}
+      {isMyScripts && (
+        <div
+          style={{
+            borderColor: `${accentInfo.accentHex}40`,
+            backgroundColor: `${accentInfo.accentHex}10`,
+          }}
+          className="max-w-4xl mx-auto w-full p-4 rounded-2xl border flex items-center justify-between gap-4 mt-2"
+        >
+          <div className="flex items-center gap-3">
+            <div
+              style={{
+                backgroundColor: accentInfo.accentHex,
+              }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-md"
+            >
+              <Code2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-extrabold text-white flex items-center gap-2">
+                <span>Meus Scripts</span>
+                <span
+                  style={{
+                    backgroundColor: `${accentInfo.accentHex}25`,
+                    color: accentInfo.accentHex,
+                  }}
+                  className="text-xs px-2 py-0.5 rounded-full font-mono font-bold"
+                >
+                  {scripts.length}
+                </span>
+              </h2>
+              <p className="text-xs text-slate-400">Scripts Luau criados e publicados por você</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => onNavigate('create')}
+            style={{
+              backgroundColor: accentInfo.accentHex,
+            }}
+            className="px-3.5 py-2 rounded-xl text-xs font-bold text-white flex items-center gap-1.5 shadow-md hover:brightness-110 active:scale-95 transition-all shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Novo Script</span>
+          </button>
+        </div>
+      )}
+
       {/* Console Search Bar */}
       <div
         style={{
@@ -97,7 +158,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, search
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleSearchSubmit();
           }}
-          placeholder="Pesquisar scripts..."
+          placeholder={isMyScripts ? "Pesquisar nos meus scripts..." : "Pesquisar scripts..."}
           className="w-full bg-transparent border-none text-slate-100 text-sm sm:text-base placeholder-slate-400 focus:outline-none"
         />
         <button
@@ -124,10 +185,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, search
       ) : (!Array.isArray(scripts) || scripts.length === 0) ? (
         <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 text-slate-400 max-w-5xl mx-auto w-full">
           <Terminal className="w-10 h-10 text-slate-500 mb-3" />
-          <h3 className="text-base font-bold text-slate-200 mb-1">Nenhum script encontrado</h3>
+          <h3 className="text-base font-bold text-slate-200 mb-1">
+            {isMyScripts ? 'Você ainda não adicionou nenhum script' : 'Nenhum script encontrado'}
+          </h3>
           <p className="text-xs text-slate-400 max-w-sm mb-4 leading-relaxed">
             {localSearch
               ? `Nenhum script corresponde à busca "${localSearch}".`
+              : isMyScripts
+              ? 'Todos os scripts que você criar ficarão salvos aqui de forma permanente.'
               : 'Clique nos três tracinhos do menu para adicionar seu primeiro script.'}
           </p>
           <button
@@ -136,10 +201,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, search
             style={{
               backgroundColor: accentInfo.accentHex,
             }}
-            className="px-4 py-2 rounded-xl font-bold text-xs text-white flex items-center gap-2 shadow-lg"
+            className="px-4 py-2 rounded-xl font-bold text-xs text-white flex items-center gap-2 shadow-lg hover:brightness-110 active:scale-95 transition-all"
           >
             <Plus className="w-4 h-4" />
-            <span>Adicionar Script</span>
+            <span>Criar Meu Script</span>
           </button>
         </div>
       ) : (

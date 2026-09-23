@@ -15,6 +15,7 @@ import {
   Globe,
   Plus,
   Trash2,
+  Sparkles,
 } from 'lucide-react';
 import { ScriptItem } from '../types';
 import { api } from '../lib/api';
@@ -22,6 +23,7 @@ import { useToast } from '../components/Toast';
 import { useTheme } from '../context/ThemeContext';
 import { useAppVersion } from '../context/VersionContext';
 import { copyToClipboard } from '../lib/clipboard';
+import { getRawUrl, getLoadstring } from '../lib/rawUrl';
 
 interface RawManagerPageProps {
   initialScriptId?: string;
@@ -48,6 +50,7 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
   // Copy state
   const [copiedRaw, setCopiedRaw] = useState(false);
   const [copiedLoadstring, setCopiedLoadstring] = useState(false);
+  const [urlFormat, setUrlFormat] = useState<'pretty' | 'short'>('pretty');
 
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://scriptsgr.dev';
 
@@ -91,13 +94,11 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
     loadDetail();
   }, [selectedScriptId]);
 
-  const rawUrl = selectedScript
-    ? selectedScript.isPasswordProtected && selectedKey
-      ? `${origin}/raw/${selectedScript.id}?key=${selectedKey}`
-      : `${origin}/raw/${selectedScript.id}`
-    : '';
+  const rawPrettyUrl = selectedScript ? getRawUrl(selectedScript, selectedKey, true) : '';
+  const rawShortUrl = selectedScript ? getRawUrl(selectedScript, selectedKey, false) : '';
+  const rawUrl = urlFormat === 'pretty' ? rawPrettyUrl : rawShortUrl;
 
-  const loadstringCode = selectedScript ? `loadstring(game:HttpGet("${rawUrl}"))()` : '';
+  const loadstringCode = selectedScript ? getLoadstring(rawPrettyUrl) : '';
 
   const handleCopy = async (text: string, type: 'raw' | 'loadstring') => {
     const success = await copyToClipboard(text);
@@ -292,21 +293,54 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
               )}
 
               {/* RAW URL Output */}
-              <div className="space-y-1.5 pt-2">
-                <label className="block text-xs font-bold text-slate-400">URL RAW Direta:</label>
+              <div className="space-y-2 pt-3 border-t border-slate-800">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-300">Formato do Link RAW:</label>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                      <ShieldCheck className="w-2.5 h-2.5" /> HTTPS
+                    </span>
+                  </div>
+                </div>
+
+                {/* Format toggle tabs */}
+                <div className="flex items-center gap-2 p-1 bg-slate-950 border border-slate-800 rounded-xl text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setUrlFormat('pretty')}
+                    className={`flex-1 py-1.5 px-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all ${
+                      urlFormat === 'pretty'
+                        ? 'bg-cyan-600 text-white shadow-xs'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-200" />
+                    <span>Formatado (.lua)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUrlFormat('short')}
+                    className={`flex-1 py-1.5 px-2.5 rounded-lg font-bold transition-all ${
+                      urlFormat === 'short'
+                        ? 'bg-slate-700 text-white shadow-xs'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Link Curto (ID)
+                  </button>
+                </div>
+
                 <div className="flex items-center gap-2">
-                  <input
-                    readOnly
-                    value={rawUrl}
-                    className="flex-1 px-3 py-2 rounded-xl text-xs font-mono bg-slate-950 border border-slate-800 text-cyan-400 select-all"
-                  />
+                  <div className="flex-1 px-3 py-2.5 rounded-xl text-xs font-mono bg-black/90 border border-slate-800 text-cyan-300 select-all truncate">
+                    {rawUrl}
+                  </div>
                   <button
                     id="btn-copy-raw-manager"
                     onClick={() => handleCopy(rawUrl, 'raw')}
-                    className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700 shrink-0"
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-bold flex items-center gap-1.5 transition-all border border-slate-700 shrink-0 active:scale-98"
                   >
                     {copiedRaw ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedRaw ? 'RAW Copiado' : 'Copiar RAW'}</span>
+                    <span>{copiedRaw ? 'Copiado!' : 'Copiar'}</span>
                   </button>
                 </div>
               </div>
@@ -317,19 +351,19 @@ export const RawManagerPage: React.FC<RawManagerPageProps> = ({ initialScriptId,
                   Comando Loadstring Luau para Execução:
                 </label>
                 <div className="flex items-center gap-2">
-                  <input
+                  <div
                     id="input-loadstring-manager"
-                    readOnly
-                    value={loadstringCode}
-                    className="flex-1 px-3 py-2 rounded-xl text-xs font-mono bg-slate-950 border border-slate-800 text-amber-300 select-all"
-                  />
+                    className="flex-1 px-3 py-2.5 rounded-xl text-xs font-mono bg-black/90 border border-slate-800 text-amber-300 select-all truncate"
+                  >
+                    {loadstringCode}
+                  </div>
                   <button
                     id="btn-copy-loadstring-manager"
                     onClick={() => handleCopy(loadstringCode, 'loadstring')}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold text-slate-950 flex items-center gap-1.5 transition-all shadow-sm shrink-0 ${accentClasses.primaryBg} ${accentClasses.primaryHover}`}
+                    className={`px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-950 flex items-center gap-1.5 transition-all shadow-sm shrink-0 active:scale-98 ${accentClasses.primaryBg} ${accentClasses.primaryHover}`}
                   >
                     {copiedLoadstring ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedLoadstring ? 'Loadstring Copiado' : 'Copiar Loadstring'}</span>
+                    <span>{copiedLoadstring ? 'Copiado!' : 'Copiar Script'}</span>
                   </button>
                 </div>
               </div>

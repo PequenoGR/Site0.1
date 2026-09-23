@@ -57,8 +57,8 @@ export function checkPasswordRateLimit(ipOrId: string): boolean {
     passwordAttemptBuckets.set(ipOrId, { count: 1, resetAt: now + 5 * 60 * 1000 }); // 5 minutes window
     return true;
   }
-  if (current.count >= 8) {
-    return false; // locked out
+  if (current.count >= 5) {
+    return false; // locked out after 5 failed attempts
   }
   current.count++;
   return true;

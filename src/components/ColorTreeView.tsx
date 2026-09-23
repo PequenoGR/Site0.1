@@ -45,21 +45,36 @@ export const ColorTreeView: React.FC<ColorTreeViewProps> = ({
 }) => {
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({
     root: true,
+    monochrome: true,
     cyber: true,
     vibrant: true,
     modes: true,
   });
   const [searchTerm, setSearchTerm] = useState('');
 
+  const monochromeColors: TreeChildColor[] = [
+    { id: 'black', name: 'Preto Ônix / Carbon', hex: '#18181b', bgClass: 'bg-zinc-900 border border-zinc-700', desc: 'Preto profundo minimalista' },
+    { id: 'white', name: 'Branco Neve / Silver', hex: '#ffffff', bgClass: 'bg-white border border-slate-300', desc: 'Branco puro e nítido' },
+    { id: 'slate', name: 'Cinza Chumbo / Grafite', hex: '#334155', bgClass: 'bg-slate-600', desc: 'Tons neutros e elegantes de grafite' },
+  ];
+
   const cyberColors: TreeChildColor[] = [
     { id: 'cyan', name: 'Ciano Neon', hex: '#06b6d4', bgClass: 'bg-cyan-500', desc: 'Estilo clássico terminal Luau' },
     { id: 'blue', name: 'Azul Royal', hex: '#2563eb', bgClass: 'bg-blue-600', desc: 'Equilíbrio e clareza visual' },
+    { id: 'indigo', name: 'Índigo Galáxia', hex: '#6366f1', bgClass: 'bg-indigo-600', desc: 'Azul profundo cósmico' },
     { id: 'violet', name: 'Violeta Cyber', hex: '#8b5cf6', bgClass: 'bg-violet-500', desc: 'Roxo futurista de alto contraste' },
+    { id: 'purple', name: 'Púrpura / Roxo Profundo', hex: '#9333ea', bgClass: 'bg-purple-600', desc: 'Roxo clássico e intenso' },
   ];
 
   const vibrantColors: TreeChildColor[] = [
+    { id: 'red', name: 'Vermelho Intenso', hex: '#ef4444', bgClass: 'bg-red-500', desc: 'Vermelho esportivo de alto impacto' },
+    { id: 'orange', name: 'Laranja Solar', hex: '#f97316', bgClass: 'bg-orange-500', desc: 'Laranja vibrante e acolhedor' },
+    { id: 'yellow', name: 'Amarelo Cyber', hex: '#eab308', bgClass: 'bg-yellow-500', desc: 'Amarelo ouro luminoso' },
     { id: 'emerald', name: 'Esmeralda', hex: '#10b981', bgClass: 'bg-emerald-500', desc: 'Verde vibrante motor Roblox' },
+    { id: 'lime', name: 'Verde Lima / Limão', hex: '#84cc16', bgClass: 'bg-lime-500', desc: 'Verde ácido moderno' },
+    { id: 'teal', name: 'Turquesa Aqua', hex: '#14b8a6', bgClass: 'bg-teal-500', desc: 'Menta refrescante e tecnológico' },
     { id: 'amber', name: 'Âmbar Dourado', hex: '#f59e0b', bgClass: 'bg-amber-500', desc: 'Tons quentes e dourados' },
+    { id: 'pink', name: 'Rosa Chiclete', hex: '#ec4899', bgClass: 'bg-pink-500', desc: 'Rosa elétrico radiante' },
     { id: 'rose', name: 'Rosa Crimson', hex: '#f43f5e', bgClass: 'bg-rose-500', desc: 'Destaque vívido e moderno' },
   ];
 
@@ -73,11 +88,11 @@ export const ColorTreeView: React.FC<ColorTreeViewProps> = ({
   };
 
   const expandAll = () => {
-    setExpandedNodes({ root: true, cyber: true, vibrant: true, modes: true });
+    setExpandedNodes({ root: true, monochrome: true, cyber: true, vibrant: true, modes: true });
   };
 
   const collapseAll = () => {
-    setExpandedNodes({ root: true, cyber: false, vibrant: false, modes: false });
+    setExpandedNodes({ root: true, monochrome: false, cyber: false, vibrant: false, modes: false });
   };
 
   const filterItem = (text: string) => {
@@ -158,6 +173,70 @@ export const ColorTreeView: React.FC<ColorTreeViewProps> = ({
           {expandedNodes.root && (
             <div className="pl-4 mt-2 border-l border-slate-800 ml-2 space-y-3 pt-1">
               
+              {/* BRANCH 0: Monochrome Colors (Preto / Branco / Chumbo) */}
+              <div className="space-y-1.5">
+                <div
+                  onClick={() => toggleNode('monochrome')}
+                  className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white py-1"
+                >
+                  <span className="text-slate-600 font-sans">├──</span>
+                  {expandedNodes.monochrome ? (
+                    <ChevronDown className="w-3.5 h-3.5 text-zinc-300" />
+                  ) : (
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                  )}
+                  {expandedNodes.monochrome ? (
+                    <FolderOpen className="w-3.5 h-3.5 text-zinc-300" />
+                  ) : (
+                    <Folder className="w-3.5 h-3.5 text-zinc-400" />
+                  )}
+                  <span className="font-semibold text-zinc-200">Preto &amp; Branco (Minimalistas)</span>
+                </div>
+
+                {expandedNodes.monochrome && (
+                  <div className="pl-6 border-l border-slate-800 ml-5 space-y-1">
+                    {monochromeColors
+                      .filter((c) => filterItem(c.name) || filterItem(c.desc))
+                      .map((c, idx, arr) => {
+                        const isLast = idx === arr.length - 1;
+                        const isSelected = currentAccent === c.id;
+                        return (
+                          <div
+                            key={c.id}
+                            onClick={() => onSelectAccent(c.id)}
+                            className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition-all ${
+                              isSelected
+                                ? 'bg-zinc-700/40 border border-zinc-500/50 text-white shadow-xs'
+                                : 'hover:bg-slate-900 border border-transparent text-slate-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="text-slate-600 font-sans">{isLast ? '└──' : '├──'}</span>
+                              <div className={`w-3.5 h-3.5 rounded-full shrink-0 shadow-sm ${c.bgClass}`} />
+                              <span className="font-bold truncate">{c.name}</span>
+                              <span className="text-[10px] text-slate-500 font-normal hidden sm:inline truncate">
+                                {c.hex}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              {isSelected ? (
+                                <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-200 bg-zinc-700/60 px-2 py-0.5 rounded-md">
+                                  <Check className="w-3 h-3" /> Ativo
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-slate-500 hover:text-slate-300">
+                                  Selecionar
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+
               {/* BRANCH 1: Cyber Colors */}
               <div className="space-y-1.5">
                 <div

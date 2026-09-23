@@ -1,8 +1,257 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { db } from '../db.js';
+import { checkPasswordRateLimit, resetPasswordRateLimit } from '../security.js';
 
 const router = Router();
+
+function escapeHtml(str: string): string {
+  return (str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function getScriptSlug(title?: string): string {
+  if (!title) return 'script.lua';
+  const clean = title
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  return `${clean || 'script'}.lua`;
+}
+
+function renderRawHtmlViewer(script: any, fullRawUrl: string, loadstringSnippet: string): string {
+  const lineCount = (script.code || '').split('\n').length;
+  const sizeBytes = Buffer.byteLength(script.code || '', 'utf8');
+  const sizeKb = (sizeBytes / 1024).toFixed(1);
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(script.title)} • ScriptsGR RAW</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #030712;
+      color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #090d16;
+      border-bottom: 1px solid #1e293b;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+    }
+    .brand-blue { color: #3b82f6; }
+    .brand-white { color: #ffffff; }
+    .title-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .script-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .badge-lua { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-secure { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-author { background: #1e293b; color: #94a3b8; }
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: #ffffff;
+    }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-color: #334155;
+    }
+    .btn-secondary:hover { background: #334155; color: #ffffff; }
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .url-bar {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: #38bdf8;
+      word-break: break-all;
+    }
+    .meta-bar {
+      font-size: 12px;
+      color: #64748b;
+      display: flex;
+      gap: 16px;
+      font-weight: 600;
+    }
+    .code-container {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    pre {
+      padding: 16px;
+      overflow-x: auto;
+      font-family: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #e2e8f0;
+      tab-size: 2;
+    }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #10b981;
+      color: #ffffff;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all 0.2s ease;
+      pointer-events: none;
+      z-index: 100;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title-area">
+      <a href="/" class="brand">
+        <span class="brand-blue">Scripts</span><span class="brand-white">GR</span>
+      </a>
+      <span class="script-title">${escapeHtml(script.title)}</span>
+      <span class="badge badge-lua">Luau .lua</span>
+      <span class="badge badge-secure">HTTPS SSL</span>
+      ${script.authorUsername ? `<span class="badge badge-author">@${escapeHtml(script.authorUsername)}</span>` : ''}
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="copyText('${escapeHtml(loadstringSnippet)}', 'Script Luau copiado!')">
+        ⚡ Copiar Script
+      </button>
+      <button class="btn btn-secondary" onclick="copyText('${escapeHtml(fullRawUrl)}', 'Link RAW copiado!')">
+        🔗 Copiar Link RAW
+      </button>
+      <a href="?raw=1" class="btn btn-secondary">
+        📄 Texto Puro (Raw)
+      </a>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="url-bar">
+      <span>${escapeHtml(fullRawUrl)}</span>
+    </div>
+
+    <div class="meta-bar">
+      <span>Linhas: ${lineCount}</span>
+      <span>Tamanho: ${sizeKb} KB</span>
+      <span>Acessos: ${script.accessCount || 0}</span>
+    </div>
+
+    <div class="code-container">
+      <pre><code>${escapeHtml(script.code || '')}</code></pre>
+    </div>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    function copyText(text, msg) {
+      navigator.clipboard.writeText(text).then(function() {
+        showToast(msg);
+      });
+    }
+    function showToast(msg) {
+      var t = document.getElementById('toast');
+      t.innerText = msg;
+      t.classList.add('show');
+      setTimeout(function() { t.classList.remove('show'); }, 2000);
+    }
+  </script>
+</body>
+</html>`;
+}
 
 /**
  * RAW Luau script endpoint handler (GET and POST)
@@ -50,14 +299,27 @@ const handleRawScript = (req: Request, res: Response) => {
       req.query.mode === 'raw'
     );
 
-    const isBrowser = !wantsRawPlain && Boolean(
+    const userAgent = (req.headers['user-agent'] as string) || '';
+    const isRobloxOrExecutor = /roblox|synapse|krnl|fluxus|scriptware|delta|arceus|codex|electron|solara|wave|celery|evon|httpclient/i.test(userAgent);
+
+    const isBrowser = !wantsRawPlain && !isRobloxOrExecutor && Boolean(
       req.headers.accept?.includes('text/html') ||
       req.headers.accept?.includes('application/xhtml+xml')
     );
 
+    const host = req.get('host') || 'scriptsgr.dev';
+    const protocol = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+    const slug = getScriptSlug(script.title);
+    const prettyUrl = `${protocol}://${host}/raw/${script.id}/${slug}`;
+    const loadstringCode = `loadstring(game:HttpGet("${prettyUrl}"))()`;
+
     // 2. Public script
     if (!script.isPasswordProtected) {
       db.incrementScriptAccess(script.id);
+      if (isBrowser) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.status(200).send(renderRawHtmlViewer(script, prettyUrl, loadstringCode));
+      }
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       return res.status(200).send(script.code);
     }
@@ -90,6 +352,37 @@ const handleRawScript = (req: Request, res: Response) => {
     const candidatePass = queryPass || (queryKey && !script.accessKeys?.some(k => k.key === queryKey) ? queryKey : undefined);
 
     const hasAttemptedAuth = Boolean(candidateKey || candidatePass);
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    const rateLimitKey = `raw:${script.id}:${ip}`;
+
+    if (hasAttemptedAuth && !checkPasswordRateLimit(rateLimitKey)) {
+      if (isBrowser) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.status(429).send(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Muitas Tentativas • ScriptsGR Shield</title>
+  <style>
+    body { background: #000; color: #fff; font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 1rem; text-align: center; }
+    .box { background: #18181b; border: 1px solid #ef4444; border-radius: 16px; padding: 2rem; max-width: 400px; box-shadow: 0 0 30px rgba(239, 68, 68, 0.2); }
+    h2 { color: #ef4444; margin-bottom: 0.5rem; }
+    p { color: #a1a1aa; font-size: 14px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>🛡️ Bloqueio Temporário</h2>
+    <p>Muitas tentativas incorretas de senha para este script. Por segurança contra ataques de força bruta, tente novamente em 5 minutos.</p>
+  </div>
+</body>
+</html>`);
+      }
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      return res.status(429).send('-- [ScriptsGR Shield] 429 Too Many Requests: Muitas tentativas incorretas. Tente novamente em 5 minutos.');
+    }
+
     let isAuthorized = false;
     let authMethod: 'key' | 'password' | null = null;
     let authorizedParam = '';
@@ -138,88 +431,22 @@ const handleRawScript = (req: Request, res: Response) => {
       }
     }
 
-    const host = req.get('host') || 'scriptsgr.dev';
-    const protocol = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+    if (isAuthorized) {
+      resetPasswordRateLimit(rateLimitKey);
+    }
+
     const fullUrl = `${protocol}://${host}/raw/${script.id}`;
 
-    // If authorized:
+    // If authorized (or public): Return pure RAW Luau code directly
     if (isAuthorized) {
       db.incrementScriptAccess(script.id);
-
       if (isBrowser) {
+        const authQuery = authorizedParam ? `?${authorizedParam}` : '';
+        const authedPrettyUrl = `${prettyUrl}${authQuery}`;
+        const authedLoadstring = `loadstring(game:HttpGet("${authedPrettyUrl}"))()`;
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        const loadstringSnippet = `loadstring(game:HttpGet("${fullUrl}?${authorizedParam}"))()`;
-        const escapedCode = script.code
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;');
-
-        return res.status(200).send(`<!DOCTYPE html>
-<html lang="pt-BR" class="dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${script.title} • Desbloqueado ScriptsGR</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #030712; color: #f1f5f9; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1.5rem; }
-    .card { background: #0b132b; border: 1px solid #1e293b; border-radius: 1.25rem; max-width: 48rem; width: 100%; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); }
-    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 1.25rem; margin-bottom: 1.5rem; }
-    .badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.85rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-    .code-box { background: #020617; border: 1px solid #1e293b; border-radius: 0.875rem; padding: 1.25rem; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.8125rem; color: #38bdf8; overflow-x: auto; max-height: 340px; white-space: pre; line-height: 1.5; margin: 1rem 0; }
-    .loadstring-box { background: #020617; border: 1px solid #334155; border-radius: 0.75rem; padding: 0.85rem 1rem; font-family: monospace; font-size: 0.8125rem; color: #fbbf24; word-break: break-all; margin-bottom: 1rem; }
-    .btn-group { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.25rem; }
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1.25rem; border-radius: 0.75rem; font-size: 0.8125rem; font-weight: 700; text-decoration: none; cursor: pointer; border: none; transition: all 0.15s ease; }
-    .btn-primary { background: #06b6d4; color: #030712; }
-    .btn-primary:hover { background: #22d3ee; }
-    .btn-secondary { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; }
-    .btn-secondary:hover { background: #334155; color: #fff; }
-    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #10b981; color: #022c22; font-weight: 700; font-size: 0.8125rem; padding: 0.75rem 1.25rem; border-radius: 0.75rem; display: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="header">
-      <div>
-        <h1 style="font-size: 1.25rem; font-weight: 800; color: #f8fafc;">${script.title}</h1>
-        <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem;">ID: <span style="color: #38bdf8; font-family: monospace;">${script.id}</span> • Autor: <strong>${script.authorUsername || 'Anônimo'}</strong></p>
-      </div>
-      <span class="badge">🛡️ Desbloqueado (${authMethod === 'password' ? 'Senha' : 'Chave'})</span>
-    </div>
-
-    <div style="font-size: 0.8125rem; color: #cbd5e1; margin-bottom: 0.5rem; font-weight: 600;">Loadstring Pronto para Roblox / Luau:</div>
-    <div class="loadstring-box" id="loadstring-text">${loadstringSnippet}</div>
-
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-      <span style="font-size: 0.8125rem; color: #cbd5e1; font-weight: 600;">Código-Fonte Luau:</span>
-      <a href="/raw/${script.id}?${authorizedParam}&raw=true" style="font-size: 0.75rem; color: #38bdf8; text-decoration: none;">Ver Texto Puro (Raw) &rarr;</a>
-    </div>
-    <div class="code-box" id="code-content">${escapedCode}</div>
-
-    <div class="btn-group">
-      <button class="btn btn-primary" onclick="copyText('loadstring-text', 'Loadstring copiado!')">📋 Copiar Loadstring</button>
-      <button class="btn btn-secondary" onclick="copyText('code-content', 'Código Luau copiado!')">📄 Copiar Código Luau</button>
-      <a href="/#/view/${script.id}" class="btn btn-secondary">Abrir no ScriptsGR</a>
-    </div>
-  </div>
-
-  <div id="toast" class="toast">Copiado com sucesso!</div>
-
-  <script>
-    function copyText(elementId, msg) {
-      const text = document.getElementById(elementId).innerText;
-      navigator.clipboard.writeText(text).then(() => {
-        const toast = document.getElementById('toast');
-        toast.innerText = msg;
-        toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, 2500);
-      });
-    }
-  </script>
-</body>
-</html>`);
+        return res.status(200).send(renderRawHtmlViewer(script, authedPrettyUrl, authedLoadstring));
       }
-
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       return res.status(200).send(script.code);
     }

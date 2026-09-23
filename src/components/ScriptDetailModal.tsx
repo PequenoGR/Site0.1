@@ -13,6 +13,8 @@ import {
   Clock,
   Terminal,
   ExternalLink,
+  ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 import { ScriptItem } from '../types';
 import { useToast } from './Toast';
@@ -20,6 +22,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useAppVersion } from '../context/VersionContext';
 import { copyToClipboard } from '../lib/clipboard';
 import { formatConsoleTime } from './ConsoleScriptCard';
+import { getRawUrl, getLoadstring, getScriptSlug } from '../lib/rawUrl';
 
 interface ScriptDetailModalProps {
   script: ScriptItem | null;
@@ -43,39 +46,42 @@ export const ScriptDetailModal: React.FC<ScriptDetailModalProps> = ({
   const { showToast } = useToast();
   const { accentInfo } = useTheme();
   const { incrementVersion } = useAppVersion();
-  const [copiedRaw, setCopiedRaw] = useState(false);
-  const [copiedLoadstring, setCopiedLoadstring] = useState(false);
+  const [activeFormat, setActiveFormat] = useState<'loadstring' | 'raw_pretty' | 'raw_short'>('loadstring');
+  const [copiedCurrent, setCopiedCurrent] = useState(false);
 
   if (!isOpen || !script) return null;
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://scriptsgr.dev';
   const activeKey = script.accessKeys && script.accessKeys.length > 0 ? script.accessKeys[0].key : undefined;
   
-  const rawUrl = script.isPasswordProtected && activeKey
-    ? `${origin}/raw/${script.id}?key=${activeKey}`
-    : `${origin}/raw/${script.id}`;
+  const rawPrettyUrl = getRawUrl(script, activeKey, true);
+  const rawShortUrl = getRawUrl(script, activeKey, false);
+  const loadstringCode = getLoadstring(rawPrettyUrl);
 
-  const loadstringCode = `loadstring(game:HttpGet("${rawUrl}"))()`;
-
-  const handleCopyRaw = async () => {
-    const success = await copyToClipboard(rawUrl);
-    if (success) {
-      setCopiedRaw(true);
-      incrementVersion('Cópia de Link RAW');
-      showToast('Link RAW Copiado!', rawUrl);
-      setTimeout(() => setCopiedRaw(false), 2000);
+  const getCurrentTextToCopy = () => {
+    switch (activeFormat) {
+      case 'raw_pretty':
+        return rawPrettyUrl;
+      case 'raw_short':
+        return rawShortUrl;
+      case 'loadstring':
+      default:
+        return loadstringCode;
     }
   };
 
-  const handleCopyLoadstring = async () => {
-    const success = await copyToClipboard(loadstringCode);
+  const handleCopyCurrent = async () => {
+    const text = getCurrentTextToCopy();
+    const success = await copyToClipboard(text);
     if (success) {
-      setCopiedLoadstring(true);
-      incrementVersion('Cópia de Loadstring');
-      showToast('Loadstring Copiado!', 'Pronto para colar e executar no seu exploit Luau.');
-      setTimeout(() => setCopiedLoadstring(false), 2000);
+      setCopiedCurrent(true);
+      incrementVersion('Cópia de Link/Script');
+      const label = activeFormat === 'loadstring' ? 'Script Luau Copiado!' : 'Link RAW Copiado!';
+      showToast(label, text);
+      setTimeout(() => setCopiedCurrent(false), 2000);
     }
   };
+
+  const currentDisplayString = getCurrentTextToCopy();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
@@ -159,38 +165,111 @@ export const ScriptDetailModal: React.FC<ScriptDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Loadstring Quick Copy Box */}
-          <div className="p-3 rounded-2xl bg-black border border-slate-800 space-y-2">
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
-              <div className="flex items-center gap-1.5 text-blue-400 font-bold">
-                <Code2 className="w-3.5 h-3.5" />
-                <span>Loadstring Roblox Luau</span>
+          {/* Security Notice for Password Protected Script */}
+          {script.isPasswordProtected && !script.isOwner && !script.isUnlocked && (
+            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-2 text-amber-300 text-xs">
+              <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Script protegido com senha. Clique em <strong>Ver Código</strong> para digitar a senha ou use a chave autorizada.</span>
+            </div>
+          )}
+
+          {/* Script & RAW Link High-End Card */}
+          <div 
+            style={{ borderColor: accentInfo.cardBorderHex }}
+            className="p-3.5 rounded-2xl bg-[#090d16] border shadow-lg space-y-2.5 transition-all"
+          >
+            {/* Top Bar: Selector and Protocols */}
+            <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
+              <div className="flex items-center gap-1.5 p-0.5 rounded-xl bg-slate-900 border border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setActiveFormat('loadstring')}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                    activeFormat === 'loadstring'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Script Luau
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFormat('raw_pretty')}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all ${
+                    activeFormat === 'raw_pretty'
+                      ? 'bg-cyan-600 text-white shadow-xs'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Sparkles className="w-3 h-3 text-cyan-300" />
+                  <span>Link .lua</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFormat('raw_short')}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                    activeFormat === 'raw_short'
+                      ? 'bg-slate-700 text-white shadow-xs'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Link Curto
+                </button>
               </div>
-              <span className="text-[10px] text-slate-500 font-mono">text/plain</span>
+
+              {/* Status Badges */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                  <ShieldCheck className="w-2.5 h-2.5" /> HTTPS
+                </span>
+                <a
+                  href={rawPrettyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors"
+                  title="Abrir Link RAW no Navegador"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800/80 font-mono text-[11px] text-slate-300 break-all select-all">
-              {loadstringCode}
+            {/* Code / Link Display Box */}
+            <div className="p-3 rounded-xl bg-black/90 border border-slate-800/90 font-mono text-[11px] text-cyan-300 break-all select-all flex items-start justify-between gap-2 shadow-inner">
+              <span className="leading-relaxed">
+                {currentDisplayString}
+              </span>
             </div>
 
-            <div className="flex items-center gap-2 pt-1">
+            {/* Quick Action Buttons */}
+            <div className="flex items-center gap-2 pt-0.5">
               <button
-                id="modal-btn-copy-loadstring"
-                onClick={handleCopyLoadstring}
-                className="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-98 transition-all"
+                id="modal-btn-copy-link"
+                onClick={handleCopyCurrent}
+                style={{
+                  backgroundColor: copiedCurrent ? '#10b981' : accentInfo.accentHex,
+                }}
+                className="flex-1 py-2.5 px-4 rounded-xl text-white text-xs font-black flex items-center justify-center gap-2 shadow-md active:scale-98 transition-all hover:brightness-110"
               >
-                {copiedLoadstring ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
-                <span>{copiedLoadstring ? 'Loadstring Copiado!' : 'Copiar Loadstring'}</span>
+                {copiedCurrent ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4 text-white" />}
+                <span>
+                  {copiedCurrent
+                    ? 'Copiado para Área de Transferência!'
+                    : activeFormat === 'loadstring'
+                    ? 'Copiar Script para Roblox'
+                    : 'Copiar Link RAW'}
+                </span>
               </button>
 
-              <button
-                id="modal-btn-copy-raw"
-                onClick={handleCopyRaw}
-                className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all"
+              <a
+                href={rawPrettyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all shrink-0"
               >
-                {copiedRaw ? <Check className="w-4 h-4 text-emerald-400" /> : <Terminal className="w-4 h-4 text-cyan-400" />}
-                <span>Link RAW</span>
-              </button>
+                <Terminal className="w-4 h-4 text-cyan-400" />
+                <span>Testar</span>
+              </a>
             </div>
           </div>
 

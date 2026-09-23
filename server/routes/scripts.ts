@@ -113,23 +113,36 @@ router.get('/:id', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
     let isAuthorized = false;
     const candidatePass = (password || pass)?.trim();
     const candidateKey = key?.trim();
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    const rateLimitKey = `api_script:${script.id}:${ip}`;
 
     if (!script.isPasswordProtected || isOwner) {
       isAuthorized = true;
-    } else if (candidateKey && script.accessKeys && script.accessKeys.some(k => k.key === candidateKey)) {
-      isAuthorized = true;
-    } else if (candidatePass && script.passwordHash && typeof candidatePass === 'string' && candidatePass.length > 0) {
-      try {
-        if (bcrypt.compareSync(candidatePass, script.passwordHash)) {
-          isAuthorized = true;
-        }
-      } catch {}
-    } else if (candidateKey && script.passwordHash && typeof candidateKey === 'string' && candidateKey.length > 0) {
-      try {
-        if (bcrypt.compareSync(candidateKey, script.passwordHash)) {
-          isAuthorized = true;
-        }
-      } catch {}
+    } else {
+      const isAttempting = Boolean(candidatePass || candidateKey);
+      if (isAttempting && !checkPasswordRateLimit(rateLimitKey)) {
+        return res.status(429).json({ error: 'Muitas tentativas incorretas. Por segurança, aguarde 5 minutos.' });
+      }
+
+      if (candidateKey && script.accessKeys && script.accessKeys.some(k => k.key === candidateKey)) {
+        isAuthorized = true;
+      } else if (candidatePass && script.passwordHash && typeof candidatePass === 'string' && candidatePass.length > 0) {
+        try {
+          if (bcrypt.compareSync(candidatePass, script.passwordHash)) {
+            isAuthorized = true;
+          }
+        } catch {}
+      } else if (candidateKey && script.passwordHash && typeof candidateKey === 'string' && candidateKey.length > 0) {
+        try {
+          if (bcrypt.compareSync(candidateKey, script.passwordHash)) {
+            isAuthorized = true;
+          }
+        } catch {}
+      }
+
+      if (isAuthorized) {
+        resetPasswordRateLimit(rateLimitKey);
+      }
     }
 
     return res.json({
@@ -491,6 +504,41 @@ router.delete('/:id/keys/:key', requireAuth, (req: AuthenticatedRequest, res: Re
     return res.json({ message: 'Chave revogada com sucesso!' });
   } catch (err) {
     return res.status(500).json({ error: 'Erro ao revogar chave.' });
+  }
+});
+
+// POST /api/scripts/sync - Sync client cached scripts to server to ensure 100% persistence
+router.post('/sync', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { scripts } = req.body;
+    if (Array.isArray(scripts) && scripts.length > 0) {
+      db.bulkSyncScripts(scripts, req.user);
+    }
+    const all = db.getScripts();
+    return res.json({
+      message: 'Scripts sincronizados com sucesso!',
+      count: all.length,
+      scripts: all.map(s => ({
+        id: s.id,
+        userId: s.userId,
+        authorUsername: s.authorUsername,
+        title: s.title,
+        category: s.category,
+        description: s.description,
+        thumbnailUrl: s.thumbnailUrl,
+        codeLength: s.code.length,
+        isPasswordProtected: s.isPasswordProtected,
+        accessCount: s.accessCount,
+        lastAccessedAt: s.lastAccessedAt,
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt,
+        accessKeysCount: s.accessKeys.length,
+        isOwner: req.user ? (s.userId === req.user.id || (s.authorEmail && req.user.email && s.authorEmail.toLowerCase() === req.user.email.toLowerCase())) : false,
+      })),
+    });
+  } catch (err) {
+    console.error('Error syncing scripts:', err);
+    return res.status(500).json({ error: 'Erro ao sincronizar scripts.' });
   }
 });
 

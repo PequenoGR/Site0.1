@@ -226,5 +226,70 @@ export const db = {
   },
   generateAccessKey(): string {
     return 'key_' + crypto.randomBytes(16).toString('hex');
+  },
+  bulkSyncScripts(incomingScripts: Script[], authUser?: { id: string; email?: string }): Script[] {
+    if (!Array.isArray(incomingScripts)) return dbInstance.scripts;
+    let modified = false;
+    for (const incoming of incomingScripts) {
+      if (!incoming || !incoming.id) continue;
+      const idx = dbInstance.scripts.findIndex(s => s.id === incoming.id);
+      if (idx === -1) {
+        // Only accept new script if it has code
+        if (!incoming.code || incoming.code.trim().length === 0) continue;
+        dbInstance.scripts.unshift({
+          id: incoming.id,
+          userId: authUser?.id || incoming.userId || 'user_demo_001',
+          authorUsername: incoming.authorUsername || 'demo',
+          authorEmail: authUser?.email || incoming.authorEmail,
+          title: (incoming.title || 'Script').slice(0, 100),
+          category: incoming.category || 'Geral',
+          description: (incoming.description || '').slice(0, 500),
+          code: incoming.code,
+          thumbnailUrl: incoming.thumbnailUrl,
+          isPasswordProtected: Boolean(incoming.isPasswordProtected),
+          passwordHash: incoming.passwordHash,
+          accessKeys: Array.isArray(incoming.accessKeys) ? incoming.accessKeys : [],
+          accessCount: incoming.accessCount || 0,
+          lastAccessedAt: incoming.lastAccessedAt || null,
+          createdAt: incoming.createdAt || new Date().toISOString(),
+          updatedAt: incoming.updatedAt || new Date().toISOString(),
+        });
+        modified = true;
+      } else {
+        // Only allow updating an existing script if the caller is the verified owner
+        const existing = dbInstance.scripts[idx];
+        const isOwner = Boolean(
+          authUser && (
+            authUser.id === existing.userId ||
+            (authUser.email && existing.authorEmail && authUser.email.toLowerCase() === existing.authorEmail.toLowerCase())
+          )
+        );
+        if (!isOwner) {
+          // Reject untrusted overwriting of someone else's script
+          continue;
+        }
+
+        if (incoming.code && incoming.code !== existing.code) {
+          existing.code = incoming.code;
+          modified = true;
+        }
+        if (incoming.title && incoming.title !== existing.title) {
+          existing.title = incoming.title;
+          modified = true;
+        }
+        if (incoming.thumbnailUrl !== undefined) {
+          existing.thumbnailUrl = incoming.thumbnailUrl;
+          modified = true;
+        }
+        if (incoming.passwordHash && incoming.passwordHash !== existing.passwordHash) {
+          existing.passwordHash = incoming.passwordHash;
+          modified = true;
+        }
+      }
+    }
+    if (modified) {
+      saveDatabase(dbInstance);
+    }
+    return dbInstance.scripts;
   }
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   LayoutDashboard,
+  Code2,
   PlusCircle,
   Settings,
   Terminal,
@@ -29,7 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = [
     { id: 'dashboard', label: 'Painel de Scripts', icon: LayoutDashboard },
-    { id: 'create', label: 'Criar Novo Script', icon: PlusCircle },
+    { id: 'my-scripts', label: 'Meus Scripts', icon: Code2 },
     { id: 'settings', label: 'Configurações', icon: Settings },
   ];
 
@@ -59,16 +60,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {/* Quick Create CTA Button */}
+        {/* Quick Create CTA Button - Botão Laranja Superior */}
         <button
           id="btn-sidebar-create"
           onClick={() => handleNav('create')}
           style={{
-            backgroundColor: accentInfo.accentHex,
+            backgroundColor: '#ea580c',
           }}
-          className="w-full py-2.5 px-4 mb-5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 text-white transition-all shadow-md active:scale-98"
+          className={`w-full py-2.5 px-4 mb-5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 text-white transition-all shadow-md active:scale-98 bg-orange-600 hover:bg-orange-500 shadow-orange-600/30 ${
+            currentTab === 'create' ? 'ring-2 ring-orange-400 ring-offset-2 ring-offset-slate-950' : ''
+          }`}
         >
-          <PlusCircle className="w-4 h-4" />
+          <PlusCircle className="w-4 h-4 text-white" />
           <span>Criar Script</span>
         </button>
 

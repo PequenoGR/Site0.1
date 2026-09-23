@@ -67,6 +67,11 @@ export const EditScriptPage: React.FC<EditScriptPageProps> = ({ scriptId, onNavi
         setHasPassword(Boolean(res.script.isPasswordProtected));
         setIsOwner(Boolean(res.script.isOwner));
         setAuthorName(res.script.authorUsername || res.script.authorEmail || 'Outro usuário');
+        if (!res.script.isOwner) {
+          showToast('Permissão Negada', 'Apenas o autor que criou este script pode editá-lo.', 'error');
+          onNavigate('view', scriptId);
+          return;
+        }
       } catch (err: any) {
         showToast('Erro ao carregar script', err.message, 'error');
         onNavigate('dashboard');

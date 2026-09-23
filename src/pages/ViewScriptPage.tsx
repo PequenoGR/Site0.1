@@ -9,11 +9,16 @@ import {
   ArrowLeft,
   Edit,
   Lock,
+  Terminal,
+  ExternalLink,
+  ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../components/Toast';
 import { copyToClipboard } from '../lib/clipboard';
 import { ScriptItem } from '../types';
+import { getRawUrl, getLoadstring } from '../lib/rawUrl';
 
 interface ViewScriptPageProps {
   scriptId: string;
@@ -54,6 +59,11 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
   }, [scriptId]);
 
   const handleDownloadCode = () => {
+    if (script?.isPasswordProtected && !isUnlocked && !script.isOwner) {
+      showToast('Acesso Protegido', 'Digite a senha do script para liberar o download.', 'info');
+      setUnlockModalOpen(true);
+      return;
+    }
     if (!script?.code) {
       showToast('Aviso', 'Não há código para baixar.', 'info');
       return;
@@ -72,6 +82,11 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
   };
 
   const handleCopyCode = async () => {
+    if (script?.isPasswordProtected && !isUnlocked && !script.isOwner) {
+      showToast('Acesso Protegido', 'Digite a senha do script para liberar a cópia do código.', 'info');
+      setUnlockModalOpen(true);
+      return;
+    }
     if (!script?.code) {
       showToast('Aviso', 'Não há código para copiar.', 'info');
       return;
@@ -105,9 +120,10 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
     );
   }
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://scriptsgr.dev';
-  const rawUrl = `${origin}/raw/${script.id}`;
-  const loadstringSnippet = `loadstring(game:HttpGet("${rawUrl}"))()`;
+  const activeKey = script.accessKeys && script.accessKeys.length > 0 ? script.accessKeys[0].key : undefined;
+  const rawUrl = getRawUrl(script, activeKey, true);
+  const loadstringSnippet = getLoadstring(rawUrl);
+  const [copiedRawLink, setCopiedRawLink] = useState(false);
 
   return (
     <div className="w-full min-h-[calc(100vh-65px)] bg-black text-white flex flex-col items-center justify-center p-4 sm:p-6 pb-16 select-none">
@@ -263,6 +279,62 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
           )}
         </div>
 
+        {/* 5.5 Beautiful RAW Link Card */}
+        <div className="w-full bg-[#121c38] border border-[#233766] rounded-xl p-3 space-y-2 shadow-md">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5 text-cyan-400 font-bold">
+              <Terminal className="w-3.5 h-3.5" />
+              <span>Link RAW (.lua)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-0.5">
+                <ShieldCheck className="w-2.5 h-2.5" /> SSL
+              </span>
+              <a
+                href={rawUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                title="Abrir no Navegador"
+              >
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+          </div>
+
+          <div className="p-2 rounded-lg bg-black/80 border border-slate-800 font-mono text-[11px] text-slate-300 break-all select-all">
+            {rawUrl}
+          </div>
+
+          <div className="flex items-center gap-2 pt-0.5">
+            <button
+              type="button"
+              id="btn-view-copy-raw-link"
+              onClick={async () => {
+                const ok = await copyToClipboard(rawUrl);
+                if (ok) {
+                  setCopiedRawLink(true);
+                  showToast('Link RAW Copiado!', rawUrl);
+                  setTimeout(() => setCopiedRawLink(false), 2000);
+                }
+              }}
+              className="flex-1 py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-bold flex items-center justify-center gap-1.5 border border-cyan-500/30 transition-all active:scale-98"
+            >
+              {copiedRawLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedRawLink ? 'Link Copiado!' : 'Copiar Link RAW'}</span>
+            </button>
+            <a
+              href={rawUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-1.5 px-3 rounded-lg bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 text-xs font-bold flex items-center gap-1 border border-blue-500/30 transition-all"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Abrir</span>
+            </a>
+          </div>
+        </div>
+
         {/* 6. Primary Action Button */}
         <div className="w-full pt-2">
           {script.isOwner ? (
@@ -292,13 +364,13 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
               onClick={async () => {
                 const ok = await copyToClipboard(loadstringSnippet);
                 if (ok) {
-                  showToast('Loadstring Copiado!', 'Código de carregamento copiado com sucesso.');
+                  showToast('Script Copiado!', 'Código de carregamento copiado com sucesso.');
                 }
               }}
               className="w-full py-2.5 sm:py-3 rounded-xl bg-[#2e52b2] hover:bg-[#3760cc] active:scale-[0.98] text-white font-extrabold text-sm sm:text-base tracking-wide transition-all shadow-lg flex items-center justify-center gap-2"
             >
               <Copy className="w-4 h-4" />
-              <span>Copiar Loadstring</span>
+              <span>Copiar Script</span>
             </button>
           )}
         </div>

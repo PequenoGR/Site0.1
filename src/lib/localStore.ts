@@ -66,7 +66,20 @@ function getStoredScripts(): StoredScript[] {
 
 function saveStoredScripts(scripts: StoredScript[]): void {
   try {
-    localStorage.setItem(LOCAL_SCRIPTS_KEY, JSON.stringify(scripts));
+    const sanitized = scripts.map((s) => {
+      // Never store plain text passwords in browser localStorage
+      const { passwordPlain: _, ...safe } = s;
+      // If script is password protected and not owned by current session, NEVER store code in localStorage
+      if (safe.isPasswordProtected && !safe.isOwner) {
+        return {
+          ...safe,
+          code: '',
+          accessKeys: [],
+        };
+      }
+      return safe;
+    });
+    localStorage.setItem(LOCAL_SCRIPTS_KEY, JSON.stringify(sanitized));
   } catch (e) {
     console.error('Failed to save local scripts', e);
   }
@@ -394,5 +407,67 @@ export const localStore = {
       }
     }
     return { status: 200, text: script.code || '' };
+  },
+
+  getStoredScripts(): StoredScript[] {
+    return getStoredScripts();
+  },
+
+  saveExternalScript(script: ScriptItem): void {
+    const scripts = getStoredScripts();
+    const idx = scripts.findIndex((s) => s.id === script.id);
+    if (idx === -1) {
+      scripts.unshift({
+        ...script,
+        code: script.code || '',
+        isOwner: script.isOwner !== false,
+      });
+    } else {
+      scripts[idx] = {
+        ...scripts[idx],
+        ...script,
+        code: script.code || scripts[idx].code || '',
+        isOwner: script.isOwner !== undefined ? script.isOwner : scripts[idx].isOwner,
+      };
+    }
+    saveStoredScripts(scripts);
+  },
+
+  syncWithServer(serverScripts: ScriptItem[], currentUserId?: string): ScriptItem[] {
+    const local = getStoredScripts();
+    const map = new Map<string, ScriptItem>();
+
+    // Put server scripts in map
+    for (const ss of serverScripts) {
+      const matchingLocal = local.find((l) => l.id === ss.id);
+      const isOwner = Boolean(
+        ss.isOwner ||
+        matchingLocal?.isOwner ||
+        (currentUserId && ss.userId === currentUserId)
+      );
+
+      // SECURITY: If password protected and user is NOT owner, NEVER store code or plain password in localStorage!
+      const safeCode = (ss.isPasswordProtected && !isOwner)
+        ? ''
+        : (ss.code || matchingLocal?.code || '');
+
+      map.set(ss.id, {
+        ...ss,
+        code: safeCode,
+        isOwner,
+        accessKeys: isOwner ? (ss.accessKeys || matchingLocal?.accessKeys || []) : [],
+      });
+    }
+
+    // Put any local scripts created by this user not yet on server
+    for (const ls of local) {
+      if (!map.has(ls.id)) {
+        map.set(ls.id, ls);
+      }
+    }
+
+    const merged = Array.from(map.values());
+    saveStoredScripts(merged as StoredScript[]);
+    return merged;
   },
 };
