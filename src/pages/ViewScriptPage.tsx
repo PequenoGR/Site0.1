@@ -166,6 +166,12 @@ export const ViewScriptPage: React.FC<ViewScriptPageProps> = ({ scriptId, onNavi
               src={script.thumbnailUrl}
               alt={script.title}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                const img = e.currentTarget;
+                if (!img.src.includes('/api/roblox/icon/')) {
+                  img.src = `/api/roblox/icon/2753915549`;
+                }
+              }}
             />
           ) : (
             <div className="flex flex-col items-center justify-center pointer-events-none">

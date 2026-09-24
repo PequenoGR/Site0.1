@@ -54,10 +54,10 @@ export const ConsoleScriptCard: React.FC<ConsoleScriptCardProps> = ({ script, on
             alt={script.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={(e) => {
-              // Fallback to "Sem foto" if image fails to load
-              const parent = (e.target as HTMLElement).parentElement;
+              const img = e.currentTarget;
+              img.style.display = 'none';
+              const parent = img.parentElement;
               if (parent) {
-                (e.target as HTMLElement).style.display = 'none';
                 const fallback = parent.querySelector('.fallback-placeholder');
                 if (fallback) (fallback as HTMLElement).style.display = 'flex';
               }
@@ -65,15 +65,15 @@ export const ConsoleScriptCard: React.FC<ConsoleScriptCardProps> = ({ script, on
           />
         ) : null}
 
-        {/* Fallback "Sem foto" */}
+        {/* Fallback "Sem foto" ou Nome do Jogo */}
         <div
-          className={`fallback-placeholder w-full h-full bg-black flex flex-col items-center justify-center ${
+          className={`fallback-placeholder w-full h-full bg-gradient-to-br from-slate-900 via-[#101b38] to-blue-950 flex-col items-center justify-center p-3 text-center ${
             hasThumbnail ? 'hidden' : 'flex'
           }`}
         >
-          <span className="text-5xl sm:text-6xl font-black text-white leading-none">?</span>
-          <span className="text-sm sm:text-base font-black text-white tracking-wide mt-1 font-['Nunito',sans-serif]">
-            Sem foto
+          <span className="text-4xl font-black text-blue-400 leading-none mb-1">🎮</span>
+          <span className="text-xs font-black text-white tracking-wide font-['Nunito',sans-serif] line-clamp-1">
+            {displayName}
           </span>
         </div>
       </div>

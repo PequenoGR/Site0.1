@@ -331,20 +331,37 @@ export const RobloxGameSelectorModal: React.FC<RobloxGameSelectorModalProps> = (
                       }`}
                     >
                       {/* Thumbnail Container */}
-                      <div className="w-full aspect-square rounded-lg bg-slate-900 overflow-hidden relative border border-slate-700/60 shadow-xs">
+                      <div className="w-full aspect-square rounded-lg bg-slate-900 overflow-hidden relative border border-slate-700/60 shadow-xs flex items-center justify-center">
                         <img
                           src={game.thumbnailUrl}
                           alt={game.name}
                           loading="lazy"
                           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          onError={(e) => {
+                            const img = e.currentTarget;
+                            if (game.placeId && !img.src.includes(`/api/roblox/icon/${game.placeId}`)) {
+                              img.src = `/api/roblox/icon/${game.placeId}`;
+                            } else {
+                              img.style.display = 'none';
+                              const parent = img.parentElement;
+                              if (parent) {
+                                const fallback = parent.querySelector('.game-fallback-icon');
+                                if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                              }
+                            }
+                          }}
                         />
+                        <div className="game-fallback-icon hidden w-full h-full bg-gradient-to-br from-blue-900 via-slate-900 to-indigo-950 flex-col items-center justify-center p-2 text-center">
+                          <Gamepad2 className="w-8 h-8 text-blue-400 mb-1" />
+                          <span className="text-[10px] font-bold text-white leading-tight line-clamp-2">{game.name}</span>
+                        </div>
                         {isSelected && (
-                          <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-md">
+                          <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-md z-10">
                             <Check className="w-3 h-3 stroke-[3]" />
                           </div>
                         )}
                         {game.placeId !== '0' && (
-                          <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/70 text-[9px] text-slate-300 font-mono backdrop-blur-xs">
+                          <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/70 text-[9px] text-slate-300 font-mono backdrop-blur-xs z-10">
                             ID: {game.placeId}
                           </div>
                         )}

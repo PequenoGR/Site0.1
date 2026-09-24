@@ -82,17 +82,23 @@ export const ScriptDetailModal: React.FC<ScriptDetailModalProps> = ({
         className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200"
       >
         {/* Header with image or badge */}
-        <div className="relative h-44 bg-black flex items-center justify-center overflow-hidden border-b border-slate-800">
+        <div className="relative h-44 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex items-center justify-center overflow-hidden border-b border-slate-800">
           {script.thumbnailUrl ? (
             <img
               src={script.thumbnailUrl}
               alt={script.title}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                const img = e.currentTarget;
+                if (!img.src.includes('/api/roblox/icon/')) {
+                  img.src = `/api/roblox/icon/2753915549`;
+                }
+              }}
             />
           ) : (
-            <div className="flex flex-col items-center justify-center">
-              <span className="text-5xl font-black text-white leading-none">?</span>
-              <span className="text-sm font-bold text-white tracking-wide mt-1">Sem foto</span>
+            <div className="flex flex-col items-center justify-center text-center p-3">
+              <span className="text-4xl mb-1">🎮</span>
+              <span className="text-sm font-bold text-white tracking-wide">{script.category || script.title}</span>
             </div>
           )}
 

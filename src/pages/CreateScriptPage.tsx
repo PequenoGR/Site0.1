@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Code2,
   Lock,
   KeyRound,
   Download,
   Copy,
+  FolderOpen,
   ChevronDown,
   ChevronUp,
   Check,
@@ -76,6 +77,33 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
     if (!name.trim()) {
       setName(`${game.name} Hub`);
     }
+  };
+
+  // File input ref for loading scripts from folders
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load Script from file/folder
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result;
+      if (typeof content === 'string') {
+        setCode(content);
+        if (!name.trim()) {
+          const cleanName = file.name.replace(/\.(lua|luau|txt|json|js|ts)$/i, '');
+          setName(cleanName);
+        }
+        showToast('Script Carregado!', `Arquivo "${file.name}" carregado com sucesso.`);
+      }
+    };
+    reader.onerror = () => {
+      showToast('Erro ao ler arquivo', 'Não foi possível carregar o arquivo das pastas.', 'error');
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   // Download Code as .lua file
@@ -171,9 +199,9 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
         currentGameName={selectedGameName}
       />
 
-      <div className="w-full max-w-[340px] sm:max-w-[380px] flex flex-col items-center gap-4">
+      <div className="w-full max-w-sm sm:max-w-md flex flex-col items-center gap-4">
         {/* Top Back Row & Author status */}
-        <div className="w-full flex items-center justify-between pb-1">
+        <div className="w-full flex items-center justify-between pb-0.5 px-0.5">
           <button
             type="button"
             id="btn-create-back"
@@ -185,7 +213,7 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
           </button>
 
           {user ? (
-            <div className="flex items-center gap-1 text-[11px] font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-800/60 px-2 py-0.5 rounded-full">
+            <div className="flex items-center gap-1 text-[11px] font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-800/60 px-2.5 py-0.5 rounded-full">
               <UserCheck className="w-3 h-3" />
               <span>@{user.username}</span>
             </div>
@@ -193,7 +221,7 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
             <button
               type="button"
               onClick={() => onNavigate('login')}
-              className="flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-950/60 border border-amber-800/60 px-2 py-0.5 rounded-full hover:bg-amber-900/60 transition-colors"
+              className="flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-950/60 border border-amber-800/60 px-2.5 py-0.5 rounded-full hover:bg-amber-900/60 transition-colors"
             >
               <LogIn className="w-3 h-3" />
               <span>Fazer Login</span>
@@ -225,8 +253,14 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
                 src={photoPreview}
                 alt={selectedGameName || "Roblox Game Preview"}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  if (category && category !== 'Universal' && !img.src.includes('/api/roblox/icon/')) {
+                    img.src = `/api/roblox/icon/2753915549`;
+                  }
+                }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-between p-3">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-between p-3.5">
                 <div className="self-end px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-xs border border-white/20 text-[10px] font-bold text-emerald-300 flex items-center gap-1 shadow-sm">
                   <Sparkles className="w-3 h-3 text-emerald-400" />
                   <span>Foto Oficial Roblox</span>
@@ -260,10 +294,10 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
 
         {/* 2. Name Section */}
         <div className="w-full flex flex-col items-center gap-1.5">
-          <label className="text-xs sm:text-sm font-bold text-[#b8c6dc] tracking-wide">
+          <label className="text-xs sm:text-sm font-bold text-[#b8c6dc] tracking-wide text-center">
             Name
           </label>
-          <div className="w-full bg-[#1e2f5b] border border-[#2e4785] rounded-xl px-3.5 py-2 sm:py-2.5 transition-all focus-within:border-[#4367c2] focus-within:ring-1 focus-within:ring-[#4367c2]">
+          <div className="w-full bg-[#1e2f5b] border border-[#2e4785] rounded-xl px-3.5 py-2.5 transition-all focus-within:border-[#4367c2] focus-within:ring-1 focus-within:ring-[#4367c2]">
             <input
               id="input-script-name"
               type="text"
@@ -277,13 +311,13 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
 
         {/* 3. Categoria Dropdown Section */}
         <div className="w-full flex flex-col items-center gap-1.5 relative">
-          <label className="text-xs sm:text-sm font-bold text-[#b8c6dc] tracking-wide">
+          <label className="text-xs sm:text-sm font-bold text-[#b8c6dc] tracking-wide text-center">
             Categoria
           </label>
           <div
             id="dropdown-category-select"
             onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-            className="w-full bg-[#1e2f5b] border border-[#2e4785] rounded-xl px-3.5 py-2 sm:py-2.5 flex items-center justify-between cursor-pointer transition-all hover:bg-[#25396e] active:scale-[0.99]"
+            className="w-full bg-[#1e2f5b] border border-[#2e4785] rounded-xl px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-all hover:bg-[#25396e] active:scale-[0.99]"
           >
             <span className="text-xs sm:text-sm font-semibold text-white truncate pr-2">
               {category}
@@ -322,73 +356,99 @@ export const CreateScriptPage: React.FC<CreateScriptPageProps> = ({ onNavigate }
           )}
         </div>
 
-        {/* 4. Code Header & Action Buttons */}
-        <div className="w-full flex items-center justify-between pt-1">
-          {/* Green Code </> title */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-lg sm:text-xl font-black text-[#00e676] tracking-tight">
+        {/* 4. Code Section - 100% Symmetrical & Centered */}
+        <div className="w-full flex flex-col items-center gap-2">
+          {/* Centered Code Header Title */}
+          <div className="flex items-center justify-center gap-1.5">
+            <span className="text-sm sm:text-base font-bold text-[#00e676] tracking-wide uppercase">
               Code
             </span>
-            <div className="border border-[#00e676] rounded px-1 py-0.2 flex items-center justify-center">
+            <div className="border border-[#00e676]/80 rounded px-1.5 py-0.5 flex items-center justify-center">
               <span className="text-[10px] font-black text-[#00e676] font-mono leading-none">&lt;/&gt;</span>
             </div>
           </div>
 
-          {/* Right actions: Senha pill & Download / Copiar pill buttons */}
-          <div className="flex items-center gap-1.5">
-            {/* Senha button */}
+          {/* Symmetrical 4-Button Toolbar with Equal Widths */}
+          <div className="w-full grid grid-cols-4 gap-1.5 sm:gap-2">
+            {/* Senha Button */}
             <button
               id="btn-script-password"
               type="button"
               onClick={() => setIsPasswordModalOpen(true)}
-              className={`px-2.5 py-1 rounded-md text-[11px] sm:text-xs font-bold flex items-center gap-1 transition-all ${
+              className={`py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition-all shadow-sm ${
                 hasPassword
-                  ? 'bg-amber-600 text-white'
-                  : 'bg-[#1e2f5b] hover:bg-[#25396e] text-[#b8c6dc] border border-[#2e4785]'
+                  ? 'bg-amber-600 hover:bg-amber-500 text-white border border-amber-400/50'
+                  : 'bg-[#1e2f5b] hover:bg-[#273d75] text-[#b8c6dc] border border-[#2e4785]'
               }`}
             >
-              <KeyRound className="w-3 h-3 text-amber-400 stroke-[2.5]" />
-              <span>Senha</span>
+              <KeyRound className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span className="truncate">Senha</span>
             </button>
 
-            {/* Download & Copiar group */}
-            <div className="flex items-center bg-[#4665c2] rounded-md overflow-hidden text-[11px] sm:text-xs font-bold text-white shadow-xs">
-              <button
-                id="btn-script-download"
-                type="button"
-                onClick={handleDownloadCode}
-                className="px-2.5 py-1 hover:bg-[#3b57aa] transition-colors flex items-center gap-1 border-r border-[#3b57aa]"
-              >
-                <span>Download</span>
-              </button>
-              <button
-                id="btn-script-copy"
-                type="button"
-                onClick={handleCopyCode}
-                className="px-2.5 py-1 hover:bg-[#3b57aa] transition-colors flex items-center gap-1"
-              >
-                {copied ? <Check className="w-3 h-3 text-emerald-300" /> : null}
-                <span>{copied ? 'Copiado' : 'Copiar'}</span>
-              </button>
-            </div>
+            {/* Carregar Button */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".lua,.luau,.txt,.text,.json"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <button
+              id="btn-script-load-file"
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              title="Carregar arquivo do dispositivo"
+              className="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition-all shadow-sm bg-[#1e2f5b] hover:bg-[#273d75] text-cyan-200 border border-[#2e4785]"
+            >
+              <FolderOpen className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="truncate">Carregar</span>
+            </button>
+
+            {/* Download Button */}
+            <button
+              id="btn-script-download"
+              type="button"
+              onClick={handleDownloadCode}
+              title="Baixar código como arquivo .lua"
+              className="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition-all shadow-sm bg-[#1e2f5b] hover:bg-[#273d75] text-blue-200 border border-[#2e4785]"
+            >
+              <Download className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+              <span className="truncate">Baixar</span>
+            </button>
+
+            {/* Copiar Button */}
+            <button
+              id="btn-script-copy"
+              type="button"
+              onClick={handleCopyCode}
+              title="Copiar código para a área de transferência"
+              className="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition-all shadow-sm bg-[#1e2f5b] hover:bg-[#273d75] text-emerald-200 border border-[#2e4785]"
+            >
+              {copied ? (
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              ) : (
+                <Copy className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              )}
+              <span className="truncate">{copied ? 'Copiado' : 'Copiar'}</span>
+            </button>
+          </div>
+
+          {/* Code Dark Blue Text Area Box */}
+          <div className="w-full bg-[#1b2b54] border border-[#293e78] rounded-xl p-3 shadow-inner">
+            <textarea
+              id="textarea-script-code"
+              rows={7}
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Cole seu código Lua/Luau aqui..."
+              spellCheck={false}
+              className="w-full bg-transparent text-xs sm:text-sm font-mono text-white placeholder-slate-500 focus:outline-none resize-none leading-relaxed"
+            />
           </div>
         </div>
 
-        {/* 5. Code Dark Blue Text Area Box */}
-        <div className="w-full bg-[#1b2b54] border border-[#293e78] rounded-xl p-3 shadow-inner">
-          <textarea
-            id="textarea-script-code"
-            rows={7}
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="Cole seu código Lua/Luau aqui..."
-            spellCheck={false}
-            className="w-full bg-transparent text-xs sm:text-sm font-mono text-white placeholder-slate-500 focus:outline-none resize-none leading-relaxed"
-          />
-        </div>
-
         {/* 6. Primary Action Button to Save/Publish */}
-        <div className="w-full pt-2">
+        <div className="w-full pt-1">
           <button
             id="btn-save-new-script"
             type="button"
